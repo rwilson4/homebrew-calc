@@ -1,0 +1,45 @@
+{
+  "Malt": [
+    {
+      "name": "German Wheat Malt",
+      "mass": "6 pounds"
+    },
+    {
+      "name": "German Pilsner",
+      "mass": "4 pounds"
+    },
+    {
+      "name": "Rice Hulls",
+      "mass": "1 pound"
+    }
+  ],
+  "Hops": [
+    {
+      "name": "Sterling",
+      "mass": "0.65 ounces",
+      "type": "pellets",
+      "boil_time": "60 minutes"
+    }
+  ],
+  "Water Profile": {
+    "calcium": 100,
+    "magnesium": 2.4,
+    "sulfate": 27,
+    "sodium": 4.8,
+    "chloride": 40,
+    "alkalinity": 9
+  },
+  "Yeast": [
+    {
+      "name": "WLP380 Hefeweizen IV Ale",
+      "attenuation": 0.80,
+      "package_date": "2016-02-20"
+    },
+    {
+      "name": "WLP380 Hefeweizen IV Ale",
+      "attenuation": 0.80,
+      "package_date": "2016-02-20"
+    }
+  ],
+  "Lactic Acid": "1 tsp"
+}

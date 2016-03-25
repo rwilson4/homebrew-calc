@@ -5,5 +5,11 @@
     "hops": "/Users/bobwilson/beer/bin/hops.json",
     "water": "/Users/bobwilson/beer/bin/water.json"
   },
-  "Brewhouse Efficiency": 0.7
+  "Brewhouse Efficiency": 0.7,
+  "Absorption Rate": "0.2 gallons_per_pound",
+  "Trub Losses": "0.25 gallons",
+  "Evaporation Rate": "1.5 gallons_per_hour",
+  "Water to Grist Ratio": "1.15 quarts_per_pound",
+  "Boil Time": "60 minutes",
+  "Pitchable Volume": "5.25 gallons"
 }

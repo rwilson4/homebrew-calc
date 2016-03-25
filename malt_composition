@@ -6,7 +6,10 @@ import sys
 from units import units
 
 def execute(config, recipe_config):
-    if 'Brewhouse Efficiency' in config:
+    
+    if 'Brewhouse Efficiency' in recipe_config:
+        brewhouse_efficiency = recipe_config['Brewhouse Efficiency']
+    elif 'Brewhouse Efficiency' in config:
         brewhouse_efficiency = config['Brewhouse Efficiency']
     else:
         brewhouse_efficiency = 0.7
@@ -14,6 +17,8 @@ def execute(config, recipe_config):
     
     if 'Pitchable Volume' in recipe_config:
         pitchable_volume = config['unit'].convertUnits(recipe_config['Pitchable Volume'], 'gallons')
+    elif 'Pitchable Volume' in config:
+        pitchable_volume = config['unit'].convertUnits(config['Pitchable Volume'], 'gallons')
     else:
         pitchable_volume = 5.25
         print 'Pitchable volume not specified, assuming {0:.02f} gallons'.format(pitchable_volume)
@@ -58,8 +63,14 @@ def execute(config, recipe_config):
 
     if 'Water to Grist Ratio' in recipe_config:
         wtgr = config['unit'].convertUnits(recipe_config['Water to Grist Ratio'], 'gallons_per_pound')
-        water_volume = wtgr * total_mass
-        recipe_config['Mash Water Volume'] = '{0:.6f} gallons'.format(water_volume)
+    elif 'Water to Grist Ratio' in config:
+        wtgr = config['unit'].convertUnits(config['Water to Grist Ratio'], 'gallons_per_pound')
+    else:
+        wtgr = 0.3
+        print 'Water to Grist Ratio not specified, assuming 1.2 quarts_per_pound'
+    
+    water_volume = wtgr * total_mass
+    recipe_config['Mash Water Volume'] = '{0:.6f} gallons'.format(water_volume)
 
     recipe_config['Original Gravity'] = 1 + 0.001 * (gravity_points / pitchable_volume)
     recipe_config['SRM'] = 1.49 * (mcu / pitchable_volume) ** 0.69
