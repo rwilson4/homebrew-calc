@@ -1,0 +1,38 @@
+{
+  "German Pilsner": {
+    "type": "base",
+    "distilled pH": 5.75,
+    "buffering capacity": 33,
+    "extract potential": 0.80,
+    "degrees lovibond": 3.0
+  },
+  "German Wheat Malt": {
+    "distilled pH": 6.05,
+    "buffering capacity": 33,
+    "extract potential": 0.85,
+    "degrees lovibond": 3.0
+  },
+  "White Wheat Malt": {
+    "distilled pH": 6.05,
+    "buffering capacity": 33,
+    "extract potential": 0.85,
+    "degrees lovibond": 3.0
+  },
+  "Maris Otter": {
+    "type": "base",
+    "distilled pH": 5.77,
+    "buffering capacity": 33,
+    "extract potential": 0.85,
+    "degrees lovibond": 3.0
+  },
+  "Dark Munich": {
+    "type": "crystal",
+    "distilled pH": 6.05,
+    "buffering capacity": 33,
+    "extract potential": 0.85,
+    "degrees lovibond": 10.0
+  },
+  "Sucrose": {
+    "ppg": 46
+  }
+}

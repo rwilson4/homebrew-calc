@@ -1,0 +1,66 @@
+#!/usr/bin/python
+
+import json
+import argparse
+import sys
+import math
+from units import units
+
+def abv_calc(og, fg, simple=None):
+    if (simple is None and og < fg + 0.05) or simple:
+        return (og - fg) * 1.3125
+    else:
+        return (0.7608 * (og - fg) / (1.775 - og)) * (fg / 0.794)
+
+def execute(config, recipe_config):
+    # Viability
+    # Starter calculation
+
+    attenuation = 0.
+    for yeast in recipe_config['Yeast']:
+        if 'attenuation' in yeast and yeast['attenuation'] > attenuation:
+            attenuation = yeast['attenuation']
+
+    if 'Original Gravity' in recipe_config:
+        og = recipe_config['Original Gravity']
+        fg = og - attenuation * (og - 1.)
+        recipe_config['Final Gravity'] = fg
+        abv = abv_calc(og, fg)
+        recipe_config['Alcohol by Volume'] = abv
+        print 'Final Gravity: {0:.03f}'.format(fg)
+        print 'Alcohol by Volume: {0:.01f}%'.format(100. * abv)
+
+        if 'Pitchable Volume' in recipe_config:
+            # Want 750k cells per milliliter per degree Plato for ales
+            # 1.5 million for lagers
+            pv = config['unit'].convertUnits(recipe_config['Pitchable Volume'], 'milliliters')
+            degP = 250 * (og - 1)
+            cell_count = 750000 * pv * degP
+            print 'Cells needed (billions): {0:.0f}'.format(cell_count / 1e9)
+
+        
+    if 'Output' in config:
+        with open(config['Output'], 'w') as outfile:
+            json.dump(recipe_config, outfile, indent=2, sort_keys=True)
+
+if __name__ == '__main__':
+    config = json.load(open('/Users/bobwilson/beer/bin/homebrew.json', 'r'))
+    unit = units()
+    unit.parseUnitFile(config['files']['units'])
+    config['unit'] = unit
+
+    hop_config = json.load(open(config['files']['hops'], 'r'))
+    config['hop'] = hop_config
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('recipe', type=str, help='Recipe JSON')
+    parser.add_argument('-o', '--output', type=str, help='Output file')
+
+    args = parser.parse_args()
+    recipe_config = json.load(open(args.recipe, 'r'))
+    if args.output:
+        config['Output'] = args.output
+
+    execute(config, recipe_config)
+
+

@@ -1,0 +1,46 @@
+{
+  "files": {
+    "mmole": "/Users/bobwilson/beer/bin/mmole_data.txt"
+  },
+  "water": {
+    "distilled": {
+      "pH": 7.0
+    }
+  },
+  "salts": {
+    "Food-grade Chalk": {
+      "calcium": 105.783950843419,
+      "carbonate": 158.388226014569
+    },
+    "Baking Soda": {
+      "sodium": 72.2957178800151,
+      "carbonate": 188.706610566905
+    },
+    "Gypsum": {
+      "calcium": 61.5031258662113,
+      "sulfate": 147.406164434473
+    },
+    "Epsom Salt": {
+      "magnesium": 26.0578858194647,
+      "sulfate": 102.983595156326
+    },
+    "Calcium Chloride": {
+      "calcium": 72.0259144091012,
+      "chloride": 127.428252085726
+    },
+    "Magnesium Chloride": {
+      "magnesium": 31.590836113383,
+      "chloride": 92.1612765050621
+    },
+    "Table Salt": {
+      "sodium": 103.923363678285,
+      "chloride": 160.248813179704
+    }
+  },
+  "Residual Alkalinity": {
+    "calcium": -0.7142857143,
+    "magnesium": -0.5882352941,
+    "alkalinity": 1.0
+  },
+  "pH reference temperature": 77
+}

@@ -1,0 +1,90 @@
+#!/usr/bin/python
+
+import json
+import argparse
+import sys
+import math
+from units import units
+
+
+def execute(config, recipe_config):
+
+    if 'Average Gravity' in recipe_config:
+        wort_gravity = recipe_config['Average Gravity']
+    else:
+        print 'Average wort gravity not specified. Try running water_composition first.'
+        sys.exit()
+    
+    if 'Average Boil Volume' in recipe_config:
+        water_volume = config['unit'].convertUnits(recipe_config['Average Boil Volume'], 'gallons')
+    else:
+        print 'Average boil volume not specified. Try running water_composition first.'
+        sys.exit()
+        
+    bigness_factor = 1.65 * (0.000125 ** (wort_gravity - 1))
+
+    ibus = 0.
+    for hop in recipe_config['Hops']:
+        if 'boil_time' in hop:
+            boil_time = config['unit'].convertUnits(hop['boil_time'], 'minutes')
+        elif 'fwh' in hop:
+            print 'First Wort Hops not supported.'
+            sys.exit()
+            boil_time = 60
+        else:
+            print 'Boil time not specified for {0:s}; exiting.'.format(hop.get('name', ''))
+            sys.exit()
+            
+        boil_time_factor = (1 - math.exp(-0.04 * boil_time)) / 4.15
+        utilization = boil_time_factor * bigness_factor
+
+        if 'mass' in hop:
+            mass = config['unit'].convertUnits(hop['mass'], 'ounces')
+        else:
+            print 'Mass not specified for {0:s}; exiting.'.format(hop.get('name', ''))
+            sys.exit()
+
+        if 'alpha acids' in hop:
+            alpha_acids = hop['alpha acids']
+        elif 'name' in hop and hop['name'] in config['hop'] and 'alpha acids' in config['hop'][hop['name']]:
+            alpha_acids = config['hop'][hop['name']]['alpha acids']
+        else:
+            print 'Alpha Acids not specified for {0:s}; exiting.'.format(hop.get('name', ''))
+            sys.exit()
+            
+        alpha_acids = alpha_acids * mass * 7490 / water_volume
+        ibu_contribution = utilization * alpha_acids
+        if 'type' in hop and hop['type'] == 'pellets':
+            ibu_contribution /= 0.9
+
+        ibus += ibu_contribution
+
+    recipe_config['IBUs'] = ibus
+    print 'IBUs: {0:.1f}'.format(recipe_config['IBUs'])
+
+    if 'Output' in config:
+        with open(config['Output'], 'w') as outfile:
+            json.dump(recipe_config, outfile, indent=2, sort_keys=True)
+
+
+if __name__ == '__main__':
+    config = json.load(open('/Users/bobwilson/beer/bin/homebrew.json', 'r'))
+    unit = units()
+    unit.parseUnitFile(config['files']['units'])
+    config['unit'] = unit
+
+    hop_config = json.load(open(config['files']['hops'], 'r'))
+    config['hop'] = hop_config
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('recipe', type=str, help='Recipe JSON')
+    parser.add_argument('-o', '--output', type=str, help='Output file')
+
+    args = parser.parse_args()
+    recipe_config = json.load(open(args.recipe, 'r'))
+    if args.output:
+        config['Output'] = args.output
+
+    execute(config, recipe_config)
+
+

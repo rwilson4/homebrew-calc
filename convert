@@ -1,0 +1,15 @@
+#!/usr/bin/python
+
+import sys
+from units import units
+
+qty = float(sys.argv[1])
+fu = sys.argv[2]
+tu = sys.argv[len(sys.argv)-1]
+
+file = '/Users/bobwilson/beer/bin/units.txt'
+unit = units()
+unit.parseUnitFile(file)
+converted =  unit.convertUnits(qty, fu, tu)
+
+print converted
