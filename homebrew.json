@@ -11,5 +11,12 @@
   "Evaporation Rate": "1.5 gallons_per_hour",
   "Water to Grist Ratio": "1.15 quarts_per_pound",
   "Boil Time": "60 minutes",
-  "Pitchable Volume": "5.25 gallons"
+  "Pitchable Volume": "5.25 gallons",
+  "Water Density": "1 kilogram_per_liter",
+  "Water Specific Heat": 1000,
+  "Grain Specific Heat": 396.8068,
+  "Mashtun Thermal Mass": 1362.152,
+  "Heat Loss During Kettle Transfer": 5.2,
+  "Heat Loss in Mashtun": 1.6,
+  "Mash Cooling Rate": 4
 }

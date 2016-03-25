@@ -1,4 +1,5 @@
 {
+  "Pitchable Volume": "5.25 gallons",
   "Malt": [
     {
       "name": "German Wheat Malt",
@@ -13,6 +14,14 @@
       "mass": "1 pound"
     }
   ],
+  "Mash": {
+    "type": "Infusion",
+    "temperature": 152,
+    "duration": "60 minutes"
+  },
+  "Brew Day": {
+    "temperature": 65
+  },
   "Hops": [
     {
       "name": "Sterling",
@@ -29,6 +38,7 @@
     "chloride": 40,
     "alkalinity": 9
   },
+  "Lactic Acid": "1 tsp",
   "Yeast": [
     {
       "name": "WLP380 Hefeweizen IV Ale",
@@ -40,6 +50,5 @@
       "attenuation": 0.80,
       "package_date": "2016-02-20"
     }
-  ],
-  "Lactic Acid": "1 tsp"
+  ]
 }
