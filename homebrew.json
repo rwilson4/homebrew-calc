@@ -18,5 +18,6 @@
   "Mashtun Thermal Mass": 1362.152,
   "Heat Loss During Kettle Transfer": 5.2,
   "Heat Loss in Mashtun": 1.6,
-  "Mash Cooling Rate": 4
+  "Mash Cooling Rate": 4,
+  "Sparge Temperature": 170
 }
