@@ -15,11 +15,13 @@ def execute(config, recipe_config):
         print 'Average wort gravity not specified. Try running water_composition first.'
         sys.exit()
     
-    if 'Average Boil Volume' in recipe_config:
-        water_volume = config['unit'].convertUnits(recipe_config['Average Boil Volume'], 'gallons')
+    if 'Pitchable Volume' in recipe_config:
+        water_volume = config['unit'].convertUnits(recipe_config['Pitchable Volume'], 'gallons')
+    elif 'Pitchable Volume' in config:
+        water_volume = config['unit'].convertUnits(config['Pitchable Volume'], 'gallons')
     else:
-        print 'Average boil volume not specified. Try running water_composition first.'
-        sys.exit()
+        water_volume = 5.25
+        print 'Pitchable volume not specified, assuming {0:.02f} gallons'.format(water_volume)
         
     bigness_factor = 1.65 * (0.000125 ** (wort_gravity - 1))
 
@@ -27,16 +29,18 @@ def execute(config, recipe_config):
     for hop in recipe_config['Hops']:
         if 'boil_time' in hop:
             boil_time = config['unit'].convertUnits(hop['boil_time'], 'minutes')
-        elif 'fwh' in hop:
-            print 'First Wort Hops not supported.'
-            sys.exit()
-            boil_time = 60
-        else:
+        elif 'addition type' in hop and hop['addition type'] == 'fwh':
+            boil_time = 20
+        elif 'addition type' not in hop:
             print 'Boil time not specified for {0:s}; exiting.'.format(hop.get('name', ''))
             sys.exit()
             
         boil_time_factor = (1 - math.exp(-0.04 * boil_time)) / 4.15
         utilization = boil_time_factor * bigness_factor
+        if 'addition type' in hop and hop['addition type'] == 'fwh':
+            utilization *= 1.1
+        elif 'addition type' in hop and hop['addition type'] == 'flameout':
+            utilization = 0.13
 
         if 'mass' in hop:
             mass = config['unit'].convertUnits(hop['mass'], 'ounces')
@@ -45,10 +49,10 @@ def execute(config, recipe_config):
             sys.exit()
 
         if 'alpha acids' in hop:
-            alpha_acids = hop['alpha acids']
+            alpha_acids = hop['alpha acids'] / 100.
         elif 'name' in hop and hop['name'] in config['hop'] and 'alpha acids' in config['hop'][hop['name']]:
-            alpha_acids = config['hop'][hop['name']]['alpha acids']
-        else:
+            alpha_acids = config['hop'][hop['name']]['alpha acids'] / 100.
+        elif utilization > 0:
             print 'Alpha Acids not specified for {0:s}; exiting.'.format(hop.get('name', ''))
             sys.exit()
             

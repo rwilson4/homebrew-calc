@@ -1,4 +1,11 @@
 {
+  "Belgian Pilsner": {
+    "type": "base",
+    "distilled pH": 5.75,
+    "buffering capacity": 33,
+    "extract potential": 0.80,
+    "degrees lovibond": 3.0
+  },
   "German Pilsner": {
     "type": "base",
     "distilled pH": 5.75,
@@ -27,10 +34,19 @@
   },
   "Dark Munich": {
     "type": "crystal",
-    "distilled pH": 6.05,
-    "buffering capacity": 33,
     "extract potential": 0.85,
     "degrees lovibond": 10.0
+  },
+  "Crystal 60L": {
+    "type": "crystal",
+    "ppg": 34,
+    "degrees lovibond": 60.0
+  },
+  "Chocolate Malt": {
+    "type": "roast",
+    "acidity": 40.0,
+    "ppg": 28,
+    "degrees lovibond": 350.0
   },
   "Sucrose": {
     "ppg": 46
