@@ -257,42 +257,42 @@ def get_common_params(config, recipe_config):
         water_density = 1. # kilograms per liter
 
     if 'Water Specific Heat' in config:
-        water_specific_heat = config['Water Specific Heat']
+        water_specific_heat = config['unit'].convertUnits(config['Water Specific Heat'], "calories_per_kilogram_per_degC")
     else:
         water_specific_heat = 1000. # calories per kg per degC
 
     if 'Grain Specific Heat' in config:
-        grain_specific_heat = config['Grain Specific Heat']
+        grain_specific_heat = config['unit'].convertUnits(config['Grain Specific Heat'], "calories_per_kilogram_per_degC")
     else:
         grain_specific_heat = 396.8068 # calories per kg per degC
 
     if 'Mashtun Thermal Mass' in config:
-        mttm = config['Mashtun Thermal Mass']
+        mttm = config['unit'].convertUnits(config['Mashtun Thermal Mass'], "calories_per_degC")
     else:
         mttm = 1362.152 # calories per degC
 
     if 'Hot Liquor Tank Thermal Mass' in config:
-        hlttm = config['Hot Liquor Tank Thermal Mass']
+        hlttm = config['unit'].convertUnits(config['Hot Liquor Tank Thermal Mass'], "calories_per_degC")
     else:
         print 'Assuming Hot Liquor Tank Thermal Mass is the same as the Mashtun Thermal Mass.'
         hlttm = mttm
 
     # Heat loss during transfer from brew kettle to mash tun
     if 'Heat Loss During Kettle Transfer' in config:
-        hldt = fahrenheit_to_celsius(config['Heat Loss During Kettle Transfer'], difference=True)
+        hldt = config['unit'].convertUnits(config['Heat Loss During Kettle Transfer'], "degC")
     else:
-        hldt = fahrenheit_to_celsius(5.2, difference=True)
+        hldt = config['unit'].convertUnits("5.2 degF", "degC")
 
     # Heat Loss In Tun: temperature drop before adding grain (error margin)
     if 'Heat Loss in Mashtun' in config:
-        hlit = fahrenheit_to_celsius(config['Heat Loss in Mashtun'], difference=True)
+        hlit = config['unit'].convertUnits(config['Heat Loss in Mashtun'], "degC")
     else:
-        hlit = fahrenheit_to_celsius(1.6, difference=True)
+        hlit = config['unit'].convertUnits("1 degF", "degC")
 
     if 'Mash Cooling Rate' in config:
-        mcr = fahrenheit_to_celsius(config['Mash Cooling Rate'], difference=True)
+        mcr = config['unit'].convertUnits(config['Mash Cooling Rate'], "degC_per_hour")
     else:
-        mcr = fahrenheit_to_celsius(4, difference=True) # degC per hour
+        mcr = config['unit'].convertUnits("4 degF_per_hour", "degC_per_hour")
 
     if 'Sparge Temperature' in config:
         sparge_temp = fahrenheit_to_celsius(config['Sparge Temperature'])
