@@ -64,6 +64,7 @@ def water_volume(config, recipe_config):
     post_boil_volume = pitchable_volume + trub_losses
     pre_boil_volume = post_boil_volume + evaporation_rate * boil_time
     average_boil_volume = 0.5 * (pre_boil_volume + post_boil_volume)
+    recipe_config['Pre-Boil Volume'] = '{0:.06f} gallons'.format(pre_boil_volume)
     recipe_config['Average Boil Volume'] = '{0:.06f} gallons'.format(average_boil_volume)
 
     if 'Absorption Rate' in recipe_config:
