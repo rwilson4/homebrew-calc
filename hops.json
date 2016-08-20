@@ -1,17 +1,11 @@
 {
-  "Sterling": {
-    "alpha acids": 6.1
-  },
-  "EK Goldings": {
-    "alpha acids": 5
-  },
-  "Mosaic": {
-    "alpha acids": 11.3
-  },
-  "Pacifica": {
-    "alpha acids": 5.5
-  },
-  "Rakau": {
-    "alpha acids": 10.5
-  }
+  "Sterling": {"alpha acids": 6.1},
+  "EK Goldings": {"alpha acids": 5},
+  "Mosaic": {"alpha acids": 11.3},
+  "Pacifica": {"alpha acids": 5.5},
+  "Rakau": {"alpha acids": 10.5},
+  "Amarillo": {"alpha acids": 10},
+  "El Dorado": {"alpha acids": 14.9},
+  "Equinox": {"alpha acids": 14.9},
+  "Wakatu": {"alpha acids": 7.0}
 }
