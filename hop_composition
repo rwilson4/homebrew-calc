@@ -27,6 +27,7 @@ def execute(config, recipe_config):
 
     ibus = 0.
     for hop in recipe_config['Hops']:
+        boil_time = 0.
         if 'boil_time' in hop:
             boil_time = config['unit'].convertUnits(hop['boil_time'], 'minutes')
         elif 'addition type' in hop and hop['addition type'] == 'fwh':
@@ -60,6 +61,14 @@ def execute(config, recipe_config):
         ibu_contribution = utilization * alpha_acids
         if 'type' in hop and hop['type'] == 'pellets':
             ibu_contribution /= 0.9
+
+        if 'boil_time' in hop:
+            boil_time = config['unit'].convertUnits(hop['boil_time'], 'minutes')
+            print '{time}-minute addition: {ibu:0.1f} IBUs'.format(time=boil_time, ibu=ibu_contribution)
+        elif 'addition type' in hop and hop['addition type'] == 'fwh':
+            print 'First-wort hopping addition: {ibu:0.1f} IBUs'.format(ibu=ibu_contribution)
+        elif 'addition type' in hop and hop['addition type'] == 'flameout':
+            print 'Flameout hopping addition: {ibu:0.1f} IBUs'.format(ibu=ibu_contribution)
 
         ibus += ibu_contribution
 
