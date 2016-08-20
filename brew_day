@@ -18,6 +18,9 @@ def execute(config, recipe_config):
         print 'Not supported.'
         sys.exit()
 
+    config, recipe_config = lauter(config, recipe_config)
+    config, recipe_config = boil(config, recipe_config)
+
     if 'Output' in config:
         with open(config['Output'], 'w') as outfile:
             json.dump(recipe_config, outfile, indent=2, sort_keys=True)
@@ -226,6 +229,33 @@ def infusion_mash(config, recipe_config):
     recipe_config['Water Temperature in Mashtun'] = celsius_to_fahrenheit(wtita)
     recipe_config['Final Mash Temperature'] = celsius_to_fahrenheit(mtf)
     
+    return config, recipe_config
+
+def lauter(config, recipe_config):
+    """ Collect pre-boil wort. """
+
+    if 'Pre-Boil Volume' not in recipe_config or 'Pre-Boil Gravity' not in recipe_config:
+        print 'Pre-Boil Volume not in config; try running water_composition first.'
+        sys.exit()
+    else:
+        print 'Collect {0:.2f} gallons of wort.'.format(config['unit'].convertUnits(recipe_config['Pre-Boil Volume'], 'gallons'))
+
+    pbg = recipe_config['Pre-Boil Gravity']
+    print 'Pre-boil gravity should be {0:.03f}.'.format(pbg)
+
+    if 'Brew Day' in recipe_config and 'Pre-Boil Volume' in recipe_config['Brew Day']:
+        print 'Actual wort collected during lauter: {0:.2f} gallons.'.format(config['unit'].convertUnits(recipe_config['Brew Day']['Pre-Boil Volume'], 'gallons'))
+    if 'Brew Day' in recipe_config and 'Pre-Boil Gravity' in recipe_config['Brew Day']:
+        apbg = recipe_config['Brew Day']['Pre-Boil Gravity']
+        print 'Actual pre-boil gravity: {0:.03f}.'.format(apbg)
+        efficiency = (1 - apbg) / (1 - pbg) * recipe_config['Brewhouse Efficiency']
+        print 'Efficiency: {0:.02f}'.format(efficiency)
+        recipe_config['Brew Day']['Efficiency'] = efficiency
+    
+    return config, recipe_config
+
+def boil(config, recipe_config):
+    """ Boil wort. """
     return config, recipe_config
 
 def get_common_params(config, recipe_config):
