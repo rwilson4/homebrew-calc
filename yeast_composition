@@ -21,8 +21,13 @@ def execute(config, recipe_config):
         if 'attenuation' in yeast and yeast['attenuation'] > attenuation:
             attenuation = yeast['attenuation']
 
-    if 'Original Gravity' in recipe_config:
+    og = None
+    if 'Brew Day' in recipe_config and 'Original Gravity' in recipe_config['Brew Day']:
+        og = recipe_config['Brew Day']['Original Gravity']
+    elif 'Original Gravity' in recipe_config:
         og = recipe_config['Original Gravity']
+
+    if og is not None:
         fg = og - attenuation * (og - 1.)
         recipe_config['Final Gravity'] = fg
         abv = abv_calc(og, fg)
@@ -38,7 +43,7 @@ def execute(config, recipe_config):
             cell_count = 750000 * pv * degP
             print 'Cells needed (billions): {0:.0f}'.format(cell_count / 1e9)
 
-        
+
     if 'Output' in config:
         with open(config['Output'], 'w') as outfile:
             json.dump(recipe_config, outfile, indent=2, sort_keys=True)
@@ -62,5 +67,3 @@ if __name__ == '__main__':
         config['Output'] = args.output
 
     execute(config, recipe_config)
-
-
