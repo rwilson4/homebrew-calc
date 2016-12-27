@@ -15,4 +15,6 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     abv = 100. * abv_calc(args.og, args.fg)
-    print '{0:.02f}%'.format(abv)
+    att = 100.0 * (args.og - args.fg) / (args.og - 1.0)
+    print '{0:.02f}% ABV'.format(abv)
+    print '{0:.0f}% Attenuation'.format(att)
