@@ -13,7 +13,7 @@ def execute(config, recipe_config):
         brewhouse_efficiency = config['Brewhouse Efficiency']
     else:
         brewhouse_efficiency = 0.7
-        print 'Brewhouse efficiency not specified; assuming {0:.0f}%'.format(100. * brewhouse_efficiency)
+        print 'Brewhouse efficiency not specified; assuming {:.0%}'.format(brewhouse_efficiency)
     
     if 'Pitchable Volume' in recipe_config:
         pitchable_volume = config['unit'].convertUnits(recipe_config['Pitchable Volume'], 'gallons')
