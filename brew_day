@@ -157,18 +157,18 @@ def infusion_mash(config, recipe_config):
 
     mwtm = mwv * water_density * water_specific_heat # calories per degC
 
-    if 'Water Temperature in Kettle' in recipe_config:
-        wtika = fahrenheit_to_celsius(recipe_config['Water Temperature in Kettle'])
+    if 'Brew Day' in recipe_config and 'Water Temperature in Kettle' in recipe_config['Brew Day']:
+        wtika = fahrenheit_to_celsius(recipe_config['Brew Day']['Water Temperature in Kettle'])
     else:
         wtika = None
 
-    if 'Water Temperature in Mashtun' in recipe_config:
-        wtitaa = fahrenheit_to_celsius(recipe_config['Water Temperature in Mashtun'])
+    if 'Brew Day' in recipe_config and 'Water Temperature in Mashtun' in recipe_config['Brew Day']:
+        wtitaa = fahrenheit_to_celsius(recipe_config['Brew Day']['Water Temperature in Mashtun'])
     else:
         wtitaa = None
 
-    if 'Final Mash Temperature' in recipe_config:
-        mtfa = fahrenheit_to_celsius(recipe_config['Final Mash Temperature'])
+    if 'Brew Day' in recipe_config and 'Final Mash Temperature' in recipe_config['Brew Day']:
+        mtfa = fahrenheit_to_celsius(recipe_config['Brew Day']['Final Mash Temperature'])
     else:
         mtfa = None
 
@@ -226,10 +226,17 @@ def infusion_mash(config, recipe_config):
         print 'Bring remaining (mash-out) water, {0:.1f} gallons, to a boil.'.format(config['unit'].convertUnits(mowv, 'liters', 'gallons'))
         print 'Add mash-out water to mash, bringing temperature up to {0:.1f} degF.'.format(celsius_to_fahrenheit(sparge_temp))
 
+    if 'Brew Day' not in recipe_config:
+        recipe_config['Brew Day'] = {}
 
-    recipe_config['Water Temperature in Kettle'] = celsius_to_fahrenheit(wtik)
-    recipe_config['Water Temperature in Mashtun'] = celsius_to_fahrenheit(wtita)
-    recipe_config['Final Mash Temperature'] = celsius_to_fahrenheit(mtf)
+    if wtika is None:
+        recipe_config['Brew Day']['Water Temperature in Kettle'] = celsius_to_fahrenheit(wtik)
+
+    if wtitaa is None:
+        recipe_config['Brew Day']['Water Temperature in Mashtun'] = celsius_to_fahrenheit(wtita)
+
+    if mtfa is None:
+        recipe_config['Brew Day']['Final Mash Temperature'] = celsius_to_fahrenheit(mtf)
 
     return config, recipe_config
 
@@ -305,7 +312,7 @@ def boil(config, recipe_config):
                 plural = ''
             else:
                 plural = 's'
-                
+
             print 'Add {0:.2f}oz {2:s} {3:s} at {1:.0f} minute{4:s}.'.format(hop['mass'], hop['boil_time'], hop['variety'], hop['pellets'], plural)
 
         for hop in hops:
@@ -359,6 +366,33 @@ def boil(config, recipe_config):
         print 'Evaporation rate: {0:.02f} gallons per hour'.format(evaporation_rate)
         print 'Original gravity: {0:.03f}'.format(og)
         print 'Efficiency: {0:.02f}'.format(efficiency)
+    elif ('Brew Day' in recipe_config
+          and 'Pre-Boil Volume' in recipe_config['Brew Day']
+          and 'Pre-Boil Gravity' in recipe_config['Brew Day']):
+
+        pre_boil_volume = config['unit'].convertUnits(recipe_config['Brew Day']['Pre-Boil Volume'], 'gallons')
+        pre_boil_gravity = recipe_config['Brew Day']['Pre-Boil Gravity']
+        pre_gp = pre_boil_gravity - 1
+
+        if 'Boil Time' in recipe_config:
+            boil_time = config['unit'].convertUnits(recipe_config['Boil Time'], 'hours')
+        elif 'Boil Time' in config:
+            boil_time = config['unit'].convertUnits(config['Boil Time'], 'hours')
+        else:
+            boil_time = 1.0
+
+        if 'Evaporation Rate' in recipe_config:
+            evaporation_rate = config['unit'].convertUnits(recipe_config['Evaporation Rate'], 'gallons_per_hour')
+        elif 'Evaporation Rate' in config:
+            evaporation_rate = config['unit'].convertUnits(config['Evaporation Rate'], 'gallons_per_hour')
+        else:
+            evaporation_rate = 1.75
+
+        post_boil_volume = pre_boil_volume - evaporation_rate * boil_time
+        og = 1 + pre_gp * pre_boil_volume / post_boil_volume
+
+        print 'Predicted original gravity: {0:.03f}'.format(og)
+        recipe_config['Brew Day']['Original Gravity'] = og
     else:
         if 'Original Gravity' in recipe_config:
             print 'Predicted original gravity: {0:.03f}'.format(recipe_config['Original Gravity'])
