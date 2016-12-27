@@ -1,7 +1,14 @@
 {
-  "Belgian Pilsner": {
+  "American Two Row": {
     "type": "base",
     "distilled pH": 5.75,
+    "buffering capacity": 33,
+    "extract potential": 0.85,
+    "degrees lovibond": 3.0
+  },
+  "Belgian Pilsner": {
+    "type": "base",
+    "distilled pH": 5.4,
     "buffering capacity": 33,
     "extract potential": 0.80,
     "degrees lovibond": 3.0
@@ -14,6 +21,12 @@
     "degrees lovibond": 3.0
   },
   "German Wheat Malt": {
+    "distilled pH": 6.05,
+    "buffering capacity": 33,
+    "extract potential": 0.85,
+    "degrees lovibond": 3.0
+  },
+  "American Wheat Malt": {
     "distilled pH": 6.05,
     "buffering capacity": 33,
     "extract potential": 0.85,
@@ -32,21 +45,62 @@
     "extract potential": 0.85,
     "degrees lovibond": 3.0
   },
+  "Golden Promise": {
+    "type": "base",
+    "distilled pH": 5.64,
+    "buffering capacity": 33,
+    "extract potential": 0.80,
+    "degrees lovibond": 2.5
+  },
+  "Munich": {
+    "type": "crystal",
+    "extract potential": 0.80,
+    "degrees lovibond": 7.0
+  },
   "Dark Munich": {
     "type": "crystal",
     "extract potential": 0.85,
     "degrees lovibond": 10.0
+  },
+  "Crystal 40L": {
+    "type": "crystal",
+    "extract potential": 0.75,
+    "degrees lovibond": 40.0
   },
   "Crystal 60L": {
     "type": "crystal",
     "ppg": 34,
     "degrees lovibond": 60.0
   },
+  "Crystal 120L": {
+    "type": "crystal",
+    "extract potential": 0.74,
+    "degrees lovibond": 120.0
+  },
   "Chocolate Malt": {
     "type": "roast",
     "acidity": 40.0,
     "ppg": 28,
     "degrees lovibond": 450.0
+  },
+  "Honey Malt": {
+    "type": "crystal",
+    "extract potential": 0.80,
+    "degrees lovibond": 23.0
+  },
+  "Roast Barley": {
+    "type": "roast",
+    "acidity": 40.0,
+    "extract potential": 0.72,
+    "degrees lovibond": 500.0
+  },
+  "Aromatic Malt": {
+    "type": "crystal",
+    "extract potential": 0.77,
+    "degrees lovibond": 20.0
+  },
+  "Flaked Oats": {
+    "ppg": 46
   },
   "Sucrose": {
     "ppg": 46
