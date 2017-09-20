@@ -52,6 +52,16 @@
     "extract potential": 0.80,
     "degrees lovibond": 2.5
   },
+  "Vienna": {
+    "type": "crystal",
+    "extract potential": 0.79,
+    "degrees lovibond": 3.5
+  },
+  "CaraRed": {
+    "type": "crystal",
+    "extract potential": 0.76,
+    "degrees lovibond": 20
+  },
   "Munich": {
     "type": "crystal",
     "extract potential": 0.80,
@@ -61,6 +71,11 @@
     "type": "crystal",
     "extract potential": 0.85,
     "degrees lovibond": 10.0
+  },
+  "Crystal 20L": {
+    "type": "crystal",
+    "extract potential": 0.75,
+    "degrees lovibond": 20.0
   },
   "Crystal 40L": {
     "type": "crystal",
@@ -82,6 +97,24 @@
     "acidity": 40.0,
     "ppg": 28,
     "degrees lovibond": 450.0
+  },
+  "Pale Chocolate": {
+    "type": "roast",
+    "acidity": 40.0,
+    "extract potential": 0.71,
+    "degrees lovibond": 200.0
+  },
+  "Victory Malt": {
+    "type": "roast",
+    "acidity": 40.0,
+    "extract potential": 0.75,
+    "degrees lovibond": 19.0
+  },
+  "Dehusked Carafa II": {
+    "type": "roast",
+    "acidity": 40.0,
+    "extract potential": 0.70,
+    "degrees lovibond": 430
   },
   "Honey Malt": {
     "type": "crystal",
