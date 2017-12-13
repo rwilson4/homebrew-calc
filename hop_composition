@@ -1,13 +1,13 @@
 #!/usr/bin/python
 
 import json
-import argparse
 import sys
 import math
 from units import units
 
 
 def execute(config, recipe_config):
+    up = unit_parser()
 
     if 'Average Gravity' in recipe_config:
         wort_gravity = recipe_config['Average Gravity']
@@ -16,9 +16,9 @@ def execute(config, recipe_config):
         sys.exit()
     
     if 'Pitchable Volume' in recipe_config:
-        water_volume = config['unit'].convertUnits(recipe_config['Pitchable Volume'], 'gallons')
+        water_volume = up.convert(recipe_config['Pitchable Volume'], 'gallons')
     elif 'Pitchable Volume' in config:
-        water_volume = config['unit'].convertUnits(config['Pitchable Volume'], 'gallons')
+        water_volume = up.convert(config['Pitchable Volume'], 'gallons')
     else:
         water_volume = 5.25
         print 'Pitchable volume not specified, assuming {0:.02f} gallons'.format(water_volume)
@@ -29,7 +29,7 @@ def execute(config, recipe_config):
     for hop in recipe_config['Hops']:
         boil_time = 0.
         if 'boil_time' in hop:
-            boil_time = config['unit'].convertUnits(hop['boil_time'], 'minutes')
+            boil_time = up.convert(hop['boil_time'], 'minutes')
         elif 'addition type' in hop and hop['addition type'] == 'fwh':
             boil_time = 20
         elif 'addition type' not in hop:
@@ -44,7 +44,7 @@ def execute(config, recipe_config):
             utilization = 0.13
 
         if 'mass' in hop:
-            mass = config['unit'].convertUnits(hop['mass'], 'ounces')
+            mass = up.convert(hop['mass'], 'ounces')
         else:
             print 'Mass not specified for {0:s}; exiting.'.format(hop.get('name', ''))
             sys.exit()
@@ -63,7 +63,7 @@ def execute(config, recipe_config):
             ibu_contribution /= 0.9
 
         if 'boil_time' in hop:
-            boil_time = config['unit'].convertUnits(hop['boil_time'], 'minutes')
+            boil_time = up.convert(hop['boil_time'], 'minutes')
             print '{time}-minute addition: {ibu:0.1f} IBUs'.format(time=boil_time, ibu=ibu_contribution)
         elif 'addition type' in hop and hop['addition type'] == 'fwh':
             print 'First-wort hopping addition: {ibu:0.1f} IBUs'.format(ibu=ibu_contribution)
@@ -81,11 +81,9 @@ def execute(config, recipe_config):
 
 
 if __name__ == '__main__':
+    import argparse
+    
     config = json.load(open('/Users/bobwilson/beer/bin/homebrew.json', 'r'))
-    unit = units()
-    unit.parseUnitFile(config['files']['units'])
-    config['unit'] = unit
-
     hop_config = json.load(open(config['files']['hops'], 'r'))
     config['hop'] = hop_config
 

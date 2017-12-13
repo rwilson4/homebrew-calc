@@ -1,6 +1,5 @@
 {
   "files": {
-    "units": "/Users/bobwilson/beer/bin/units.txt",
     "malt": "/Users/bobwilson/beer/bin/malt.json",
     "hops": "/Users/bobwilson/beer/bin/hops.json",
     "water": "/Users/bobwilson/beer/bin/water.json"

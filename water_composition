@@ -10,10 +10,9 @@
 # http://braukaiser.com/wiki/index.php?title=Mash_pH_control
 
 import json
-import argparse
 import sys
 import numpy as np
-from units import units
+from unit_parser import unit_parser
 from scipy import interpolate
 import cvxpy as cvx
 from convert_pH_temp import convert_pH_temp
@@ -28,35 +27,36 @@ def execute(config, recipe_config):
         
 
 def water_volume(config, recipe_config):
+    up = unit_parser()
 
     if 'Boil Time' in recipe_config:
-        boil_time = config['unit'].convertUnits(recipe_config['Boil Time'], 'hours')
+        boil_time = up.convert(recipe_config['Boil Time'], 'hours')
     elif 'Boil Time' in config:
-        boil_time = config['unit'].convertUnits(config['Boil Time'], 'hours')
+        boil_time = up.convert(config['Boil Time'], 'hours')
     else:
         print 'Boil Length not specified.'
         return config, recipe_config
 
     if 'Evaporation Rate' in recipe_config:
-        evaporation_rate = config['unit'].convertUnits(recipe_config['Evaporation Rate'], 'gallons_per_hour')
+        evaporation_rate = up.convert(recipe_config['Evaporation Rate'], 'gallons_per_hour')
     elif 'Evaporation Rate' in config:
-        evaporation_rate = config['unit'].convertUnits(config['Evaporation Rate'], 'gallons_per_hour')
+        evaporation_rate = up.convert(config['Evaporation Rate'], 'gallons_per_hour')
     else:
         print 'Evaporation Rate not specified.'
         return config, recipe_config
     
     if 'Trub Losses' in recipe_config:
-        trub_losses = config['unit'].convertUnits(recipe_config['Trub Losses'], 'gallons')
+        trub_losses = up.convert(recipe_config['Trub Losses'], 'gallons')
     elif 'Trub Losses' in config:
-        trub_losses = config['unit'].convertUnits(config['Trub Losses'], 'gallons')
+        trub_losses = up.convert(config['Trub Losses'], 'gallons')
     else:
         print 'Trub Losses not specified.'
         return config, recipe_config
 
     if 'Pitchable Volume' in recipe_config:
-        pitchable_volume = config['unit'].convertUnits(recipe_config['Pitchable Volume'], 'gallons')
+        pitchable_volume = up.convert(recipe_config['Pitchable Volume'], 'gallons')
     elif 'Pitchable Volume' in config:
-        pitchable_volume = config['unit'].convertUnits(config['Pitchable Volume'], 'gallons')
+        pitchable_volume = up.convert(config['Pitchable Volume'], 'gallons')
     else:
         pitchable_volume = 5.25
         print 'Pitchable volume not specified, assuming {0:.02f} gallons'.format(pitchable_volume)
@@ -68,9 +68,9 @@ def water_volume(config, recipe_config):
     recipe_config['Average Boil Volume'] = '{0:.06f} gallons'.format(average_boil_volume)
 
     if 'Absorption Rate' in recipe_config:
-        ar = config['unit'].convertUnits(recipe_config['Absorption Rate'], 'gallons_per_pound')
+        ar = up.convert(recipe_config['Absorption Rate'], 'gallons_per_pound')
     elif 'Absorption Rate' in config:
-        ar = config['unit'].convertUnits(config['Absorption Rate'], 'gallons_per_pound')
+        ar = up.convert(config['Absorption Rate'], 'gallons_per_pound')
     else:
         ar = 0.2
         print 'Absorption Rate not specified, assuming {0:.02f} gallons_per_pound.'.format(ar)
@@ -79,13 +79,13 @@ def water_volume(config, recipe_config):
         mass = 0
         for malt in recipe_config['Malt']:
             if 'mass' in malt:
-                mass += config['unit'].convertUnits(malt['mass'], 'pounds')
+                mass += up.convert(malt['mass'], 'pounds')
         wltg = ar * mass
     else:
         wltg = 0.
 
     if 'Mash Water Volume' in recipe_config:
-        mwv = config['unit'].convertUnits(recipe_config['Mash Water Volume'], 'gallons')
+        mwv = up.convert(recipe_config['Mash Water Volume'], 'gallons')
         recipe_config['Sparge and Mash-out Water Volume'] = '{0:.06f} gallons'.format(wltg + pre_boil_volume - mwv)
         print 'Total Water: {0:.01f} gallons'.format(wltg + pre_boil_volume)
     else:
@@ -106,6 +106,7 @@ def water_volume(config, recipe_config):
     return config, recipe_config
 
 def water_chemistry(config, recipe_config):
+    up = unit_parser()
     A, target_composition, rac = get_targets(config, recipe_config)
     
     ingredients = ['Distilled water',
@@ -162,17 +163,17 @@ def water_chemistry(config, recipe_config):
 
     if 'Mash Water Volume' in recipe_config:
         print ''
-        mwv = config['unit'].convertUnits(recipe_config['Mash Water Volume'], 'gallons')
+        mwv = up.convert(recipe_config['Mash Water Volume'], 'gallons')
         for i in range(1,len(w)):
             if w[i] > 0:
                 print '{0:.02f} grams {1:s} in mash'.format(w[i] * mwv, ingredients[i])
 
     if 'Lactic Acid' in recipe_config:
-        print '{0:.2f} tsp lactic acid in mash'.format(config['unit'].convertUnits(recipe_config['Lactic Acid'], 'tsp'))
+        print '{0:.2f} tsp lactic acid in mash'.format(up.convert(recipe_config['Lactic Acid'], 'tsp'))
         
     if 'Sparge and Mash-out Water Volume' in recipe_config:
         print ''
-        smwv = config['unit'].convertUnits(recipe_config['Sparge and Mash-out Water Volume'], 'gallons')
+        smwv = up.convert(recipe_config['Sparge and Mash-out Water Volume'], 'gallons')
         for i in range(1,len(w)):
             if w[i] > 0.1:
                 print '{0:.02f} grams {1:s} in sparge/mash-out water'.format(w[i] * smwv, ingredients[i])
@@ -225,9 +226,9 @@ def water_chemistry(config, recipe_config):
         if m['name'] == 'Rice Hulls':
             continue
         
-        malt_mass += config['unit'].convertUnits(m.get('mass', 0), 'kilograms')
+        malt_mass += up.convert(m.get('mass', 0), 'kilograms')
         if m['name'] == 'Acidulated Malt':
-            acidulated_mass += config['unit'].convertUnits(m.get('mass', 0), 'kilograms')
+            acidulated_mass += up.convert(m.get('mass', 0), 'kilograms')
     acidulated_delta = 100 * 0.1 * acidulated_mass / malt_mass
     pH -= acidulated_delta
 
@@ -244,18 +245,18 @@ def water_chemistry(config, recipe_config):
     return config, recipe_config
 
 def balance_eq(mash_pH, config, recipe_config):
+    up = unit_parser()
     baseline_pH = 4.3
-    unit = config['unit']
 
     r = config['r']
     
     if 'Lactic Acid' in recipe_config:
-        lactic_acid_volume = unit.convertUnits(recipe_config['Lactic Acid'], 'milliliters')
+        lactic_acid_volume = up.convert(recipe_config['Lactic Acid'], 'milliliters')
     else:
         lactic_acid_volume = 0.
 
     if 'Mash Water Volume' in recipe_config:
-        water_volume = unit.convertUnits(recipe_config['Mash Water Volume'], 'liters')
+        water_volume = up.convert(recipe_config['Mash Water Volume'], 'liters')
     else:
         print 'Mash Water Volume not specified. Try running malt_composition first.'
         sys.exit()
@@ -326,7 +327,7 @@ def balance_eq(mash_pH, config, recipe_config):
             acids.append(1)
             #print 'Acdidity for {0:s} not specified; assuming 0.'.format(x['name'])
 
-        malt_mass.append(unit.convertUnits(x.get('mass', 0.), 'kg'))
+        malt_mass.append(up.convert(x.get('mass', '0 kg'), 'kg'))
 
     malt_dipH = np.array(malt_dipH)
     malt_buffering_capacity = np.array(malt_buffering_capacity)
@@ -410,11 +411,9 @@ def get_targets(config, recipe_config):
     return A, target_composition, rac
 
 if __name__ == '__main__':
-    config = json.load(open('/Users/bobwilson/beer/bin/homebrew.json', 'r'))
-    unit = units()
-    unit.parseUnitFile(config['files']['units'])
-    config['unit'] = unit
+    import argparse
 
+    config = json.load(open('/Users/bobwilson/beer/bin/homebrew.json', 'r'))
     water_config = json.load(open(config['files']['water'], 'r'))
     config['water'] = water_config
     

@@ -1,11 +1,11 @@
 #!/usr/bin/python
 
 import json
-import argparse
 import sys
-from units import units
+from unit_parser import unit_parser
 
 def execute(config, recipe_config):
+    up = unit_parser()
     
     if 'Brewhouse Efficiency' in recipe_config:
         brewhouse_efficiency = recipe_config['Brewhouse Efficiency']
@@ -16,9 +16,9 @@ def execute(config, recipe_config):
         print 'Brewhouse efficiency not specified; assuming {0:.0f}%'.format(100. * brewhouse_efficiency)
     
     if 'Pitchable Volume' in recipe_config:
-        pitchable_volume = config['unit'].convertUnits(recipe_config['Pitchable Volume'], 'gallons')
+        pitchable_volume = up.convert(recipe_config['Pitchable Volume'], 'gallons')
     elif 'Pitchable Volume' in config:
-        pitchable_volume = config['unit'].convertUnits(config['Pitchable Volume'], 'gallons')
+        pitchable_volume = up.convert(config['Pitchable Volume'], 'gallons')
     else:
         pitchable_volume = 5.25
         print 'Pitchable volume not specified, assuming {0:.02f} gallons'.format(pitchable_volume)
@@ -34,7 +34,7 @@ def execute(config, recipe_config):
 
     for malt in recipe_config['Malt']:
         if 'mass' in malt:
-            mass = config['unit'].convertUnits(malt['mass'], 'pounds')
+            mass = up.convert(malt['mass'], 'pounds')
             total_mass += mass
         else:
             mass = 0.
@@ -62,9 +62,9 @@ def execute(config, recipe_config):
         mcu += degL * mass
 
     if 'Water to Grist Ratio' in recipe_config:
-        wtgr = config['unit'].convertUnits(recipe_config['Water to Grist Ratio'], 'gallons_per_pound')
+        wtgr = up.convert(recipe_config['Water to Grist Ratio'], 'gallons_per_pound')
     elif 'Water to Grist Ratio' in config:
-        wtgr = config['unit'].convertUnits(config['Water to Grist Ratio'], 'gallons_per_pound')
+        wtgr = up.convert(config['Water to Grist Ratio'], 'gallons_per_pound')
     else:
         wtgr = 0.3
         print 'Water to Grist Ratio not specified, assuming 1.2 quarts_per_pound'
@@ -84,11 +84,8 @@ def execute(config, recipe_config):
             json.dump(recipe_config, outfile, indent=2, sort_keys=True)
 
 if __name__ == '__main__':
+    import argparse
     config = json.load(open('/Users/bobwilson/beer/bin/homebrew.json', 'r'))
-    unit = units()
-    unit.parseUnitFile(config['files']['units'])
-    config['unit'] = unit
-
     malt_config = json.load(open(config['files']['malt'], 'r'))
     config['malt'] = malt_config
 
