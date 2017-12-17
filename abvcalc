@@ -1,11 +1,5 @@
 #!/usr/bin/python
-
-
-def abv_calc(og, fg, simple=None):
-    if (simple is None and og < fg + 0.05) or simple:
-        return (og - fg) * 1.3125
-    else:
-        return (0.7608 * (og - fg) / (1.775 - og)) * (fg / 0.794)
+from yeast_composition import abv_calc, attenuation
 
 if __name__ == '__main__':
     import argparse
@@ -15,6 +9,6 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     abv = 100. * abv_calc(args.og, args.fg)
-    att = 100.0 * (args.og - args.fg) / (args.og - 1.0)
+    att = 100.0 * attenuation(args.og, args.fg)
     print '{0:.02f}% ABV'.format(abv)
     print '{0:.0f}% Attenuation'.format(att)
