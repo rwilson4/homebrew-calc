@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 from __future__ import print_function
 import json
 import os
@@ -116,12 +114,16 @@ def execute(config, recipe_config):
         if 'Pitchable Volume' in recipe_config:
             # Want 750k cells per milliliter per degree Plato for ales
             # 1.5 million for lagers
+            if recipe_config.get('Ale or Lager', 'Ale') == 'Ale':
+                cells_needed = 750000
+            else:
+                cells_needed = 1500000
+            
             up = unit_parser()
             pv = up.convert(recipe_config['Pitchable Volume'], 'milli_liters')
             degP = gravity_to_deg_plato(og)
-            cell_count = 750000 * pv * degP
+            cell_count = cells_needed * pv * degP
             print('Cells needed (billions): {0:.0f}'.format(cell_count / 1e9))
-
 
     if 'Output' in config:
         with open(config['Output'], 'w') as outfile:
