@@ -1,8 +1,8 @@
 {
   "files": {
-    "malt": "/Users/bobwilson/beer/bin/malt.json",
-    "hops": "/Users/bobwilson/beer/bin/hops.json",
-    "water": "/Users/bobwilson/beer/bin/water.json"
+    "malt": "malt.json",
+    "hops": "hops.json",
+    "water": "water.json"
   },
   "Brewhouse Efficiency": 0.7,
   "Absorption Rate": "0.25 gallons_per_pound",

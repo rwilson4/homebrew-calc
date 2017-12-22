@@ -134,10 +134,11 @@ if __name__ == '__main__':
     import argparse
 
     this_dir, this_filename = os.path.split(__file__)
-    homebrew_config = os.join(this_dir, 'bin', 'homebrew.json')
-
+    homebrew_config = os.path.join(this_dir, 'resources', 'homebrew.json')
     config = json.load(open(homebrew_config, 'r'))
-    hop_config = json.load(open(config['files']['hops'], 'r'))
+    
+    hop_config_file = os.path.join(this_dir, 'resources', config['files']['hops'])
+    hop_config = json.load(open(hop_config_file, 'r'))
     config['hop'] = hop_config
 
     parser = argparse.ArgumentParser()
