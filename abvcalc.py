@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from yeast_composition import abv_calc, attenuation
 
-if __name__ == '__main__':
+def execute():
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('og', type=float, help='Original Gravity')
@@ -12,3 +12,6 @@ if __name__ == '__main__':
     att = 100.0 * attenuation(args.og, args.fg)
     print '{0:.02f}% ABV'.format(abv)
     print '{0:.0f}% Attenuation'.format(att)
+
+if __name__ == '__main__':
+    execute()
