@@ -137,10 +137,6 @@ if __name__ == '__main__':
     homebrew_config = os.path.join(this_dir, 'resources', 'homebrew.json')
     config = json.load(open(homebrew_config, 'r'))
     
-    hop_config_file = os.path.join(this_dir, 'resources', config['files']['hops'])
-    hop_config = json.load(open(hop_config_file, 'r'))
-    config['hop'] = hop_config
-
     parser = argparse.ArgumentParser()
     parser.add_argument('recipe', type=str, help='Recipe JSON')
     parser.add_argument('-o', '--output', type=str, help='Output file')

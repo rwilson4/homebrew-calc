@@ -1,9 +1,109 @@
-#!/usr/bin/python
-
+from __future__ import print_function
 import json
 import sys
 import math
-from units import units
+from unit_parser import unit_parser
+
+
+FIRST_WORT_HOPPING = 'first wort hopping'
+FLAMEOUT = 'flameout'
+
+
+def bigness_factor(wort_gravity):
+    """Wort 'bigness factor' for hop utilization.
+
+    Parameters
+    ----------
+     wort_gravity : float
+        Average specific gravity of wort during boil.
+
+    Returns
+    -------
+     bigness_factor : float
+        Multiplicative factor for hop utilization based on wort
+        gravity.
+
+    """
+    return 1.65 * (0.000125 ** (wort_gravity - 1))
+
+
+def boil_time_factor(boil_time_minutes):
+    """Boil time factor for hop utilization.
+
+    Parameters
+    ----------
+     boil_time_minutes : float
+        Amount of time hops spend in the boil, in minutes.
+
+    Returns
+    -------
+     boil_time_factor : float
+        Multiplicative factor for hop utilization based on boil time.
+
+    """
+    return (1 - math.exp(-0.04 * boil_time_minutes)) / 4.15
+
+
+def hop_utilization(wort_gravity, boil_time_minutes, addition_type=None):
+    """Hop utilization.
+
+    Parameters
+    ----------
+     wort_gravity : float
+        Average specific gravity of wort during boil.
+     boil_time_minutes : float
+        Amount of time hops spend in the boil, in minutes.
+     addition_type : string or None
+        Type of hop addition. Currently supported options include
+        'first wort hopping', 'flameout', or regular, timed hop
+        additions. Any addition type other than 'first wort hopping'
+        and 'flameout' will be interpreted as a regular, timed
+        addition, e.g. a 20-minute addition.
+
+    Returns
+    -------
+     utilization : float
+        Hop utilization.
+
+    """
+    if addition_type is not None and addition_type == FLAMEOUT:
+        return 0.13
+    
+    bf = bigness_factor(wort_gravity)
+    btf = boil_time_factor(boil_time_minutes)
+    if addition_type is not None and addition_type == FIRST_WORT_HOPPING:
+        return 1.1 * bf * btf
+    else:
+        return bf * btf
+
+def ibu_contribution(alpha_acids, mass_oz, boil_vol_gal, utilization, hop_type='pellets'):
+    """IBU Contribution
+
+    Parameters
+    ----------
+     alpha_acids : float
+        Alpha acid content of hop, e.g. 0.045 for a 4.5% AA hop.
+     mass_oz : float
+        Weight of hops, in ounces.
+     boil_vol_gal : float
+        Average volume of boil, in gallons.
+     utilization : float
+        Hop utilization.
+     hop_type : string
+        Either 'pellets' or 'whole' (defaults to 'pellets').
+
+    Returns
+    -------
+     ibus : float
+        IBU contribution of this addition.
+
+    """
+
+    ibus = utilization * alpha_acids * mass_oz * 7490 / boil_vol_gal
+    if hop_type == 'pellets':
+        return ibus / 0.9
+    else:
+        return ibus
 
 
 def execute(config, recipe_config):
@@ -12,68 +112,53 @@ def execute(config, recipe_config):
     if 'Average Gravity' in recipe_config:
         wort_gravity = recipe_config['Average Gravity']
     else:
-        print 'Average wort gravity not specified. Try running water_composition first.'
-        sys.exit()
-    
+        raise ValueError('Average wort gravity not specified. Try running water_composition first.')
+
     if 'Pitchable Volume' in recipe_config:
         water_volume = up.convert(recipe_config['Pitchable Volume'], 'gallons')
     elif 'Pitchable Volume' in config:
         water_volume = up.convert(config['Pitchable Volume'], 'gallons')
     else:
         water_volume = 5.25
-        print 'Pitchable volume not specified, assuming {0:.02f} gallons'.format(water_volume)
-        
-    bigness_factor = 1.65 * (0.000125 ** (wort_gravity - 1))
+        print('Pitchable volume not specified, assuming {0:.02f} gallons'.format(water_volume))
 
-    ibus = 0.
+    total_ibus = 0.
     for hop in recipe_config['Hops']:
         boil_time = 0.
         if 'boil_time' in hop:
             boil_time = up.convert(hop['boil_time'], 'minutes')
-        elif 'addition type' in hop and hop['addition type'] == 'fwh':
+        elif 'addition type' in hop and hop['addition type'] == FIRST_WORT_HOPPING:
             boil_time = 20
         elif 'addition type' not in hop:
-            print 'Boil time not specified for {0:s}; exiting.'.format(hop.get('name', ''))
-            sys.exit()
-            
-        boil_time_factor = (1 - math.exp(-0.04 * boil_time)) / 4.15
-        utilization = boil_time_factor * bigness_factor
-        if 'addition type' in hop and hop['addition type'] == 'fwh':
-            utilization *= 1.1
-        elif 'addition type' in hop and hop['addition type'] == 'flameout':
-            utilization = 0.13
+            raise ValueError('Boil time not specified for {0:s}; exiting.'.format(hop.get('name', '')))
+
+        utilization = hop_utilization(wort_gravity, boil_time, hop.get('addition type', None))
 
         if 'mass' in hop:
             mass = up.convert(hop['mass'], 'ounces')
         else:
-            print 'Mass not specified for {0:s}; exiting.'.format(hop.get('name', ''))
-            sys.exit()
+            raise ValueError('Mass not specified for {0:s}; exiting.'.format(hop.get('name', '')))
 
         if 'alpha acids' in hop:
             alpha_acids = hop['alpha acids'] / 100.
         elif 'name' in hop and hop['name'] in config['hop'] and 'alpha acids' in config['hop'][hop['name']]:
             alpha_acids = config['hop'][hop['name']]['alpha acids'] / 100.
         elif utilization > 0:
-            print 'Alpha Acids not specified for {0:s}; exiting.'.format(hop.get('name', ''))
-            sys.exit()
-            
-        alpha_acids = alpha_acids * mass * 7490 / water_volume
-        ibu_contribution = utilization * alpha_acids
-        if 'type' in hop and hop['type'] == 'pellets':
-            ibu_contribution /= 0.9
+            raise ValueError('Alpha Acids not specified for {0:s}; exiting.'.format(hop.get('name', '')))
+
+        ibus = ibu_contribution(alpha_acids, mass, water_volume, utilization, hop.get('type', 'pellets'))
 
         if 'boil_time' in hop:
-            boil_time = up.convert(hop['boil_time'], 'minutes')
-            print '{time}-minute addition: {ibu:0.1f} IBUs'.format(time=boil_time, ibu=ibu_contribution)
-        elif 'addition type' in hop and hop['addition type'] == 'fwh':
-            print 'First-wort hopping addition: {ibu:0.1f} IBUs'.format(ibu=ibu_contribution)
-        elif 'addition type' in hop and hop['addition type'] == 'flameout':
-            print 'Flameout hopping addition: {ibu:0.1f} IBUs'.format(ibu=ibu_contribution)
+            print('{time}-minute addition: {ibu:0.1f} IBUs'.format(time=boil_time, ibu=ibus))
+        elif 'addition type' in hop and hop['addition type'] == FIRST_WORT_HOPPING:
+            print('First-wort hopping addition: {ibu:0.1f} IBUs'.format(ibu=ibus))
+        elif 'addition type' in hop and hop['addition type'] == FLAMEOUT:
+            print('Flameout hopping addition: {ibu:0.1f} IBUs'.format(ibu=ibus))
 
-        ibus += ibu_contribution
+        total_ibus += ibus
 
-    recipe_config['IBUs'] = ibus
-    print 'IBUs: {0:.1f}'.format(recipe_config['IBUs'])
+    recipe_config['IBUs'] = total_ibus
+    print('IBUs: {0:.1f}'.format(recipe_config['IBUs']))
 
     if 'Output' in config:
         with open(config['Output'], 'w') as outfile:
@@ -82,9 +167,13 @@ def execute(config, recipe_config):
 
 if __name__ == '__main__':
     import argparse
-    
-    config = json.load(open('/Users/bobwilson/beer/bin/homebrew.json', 'r'))
-    hop_config = json.load(open(config['files']['hops'], 'r'))
+
+    this_dir, this_filename = os.path.split(__file__)
+    homebrew_config = os.path.join(this_dir, 'resources', 'homebrew.json')
+    config = json.load(open(homebrew_config, 'r'))
+
+    hop_config_file = os.path.join(this_dir, 'resources', config['files']['hops'])
+    hop_config = json.load(open(hop_config_file, 'r'))
     config['hop'] = hop_config
 
     parser = argparse.ArgumentParser()
@@ -97,5 +186,3 @@ if __name__ == '__main__':
         config['Output'] = args.output
 
     execute(config, recipe_config)
-
-
