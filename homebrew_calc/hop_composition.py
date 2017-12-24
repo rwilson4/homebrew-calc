@@ -68,7 +68,7 @@ def hop_utilization(wort_gravity, boil_time_minutes, addition_type=None):
     """
     if addition_type is not None and addition_type == FLAMEOUT:
         return 0.13
-    
+
     bf = bigness_factor(wort_gravity)
     btf = boil_time_factor(boil_time_minutes)
     if addition_type is not None and addition_type == FIRST_WORT_HOPPING:
@@ -76,7 +76,9 @@ def hop_utilization(wort_gravity, boil_time_minutes, addition_type=None):
     else:
         return bf * btf
 
-def ibu_contribution(alpha_acids, mass_oz, boil_vol_gal, utilization, hop_type='pellets'):
+
+def ibu_contribution(alpha_acids, mass_oz, boil_vol_gal, utilization,
+                     hop_type='pellets'):
     """IBU Contribution
 
     Parameters
@@ -112,7 +114,9 @@ def execute(config, recipe_config):
     if 'Average Gravity' in recipe_config:
         wort_gravity = recipe_config['Average Gravity']
     else:
-        raise ValueError('Average wort gravity not specified. Try running water_composition first.')
+        msg = 'Average wort gravity not specified.'
+        msg += ' Try running water_composition first.'
+        raise ValueError(msg)
 
     if 'Pitchable Volume' in recipe_config:
         water_volume = up.convert(recipe_config['Pitchable Volume'], 'gallons')
@@ -120,7 +124,8 @@ def execute(config, recipe_config):
         water_volume = up.convert(config['Pitchable Volume'], 'gallons')
     else:
         water_volume = 5.25
-        print('Pitchable volume not specified, assuming {0:.02f} gallons'.format(water_volume))
+        msg = 'Pitchable volume not specified, assuming {0:.02f} gallons'
+        print(msg.format(water_volume))
 
     total_ibus = 0.
     for hop in recipe_config['Hops']:
@@ -130,26 +135,33 @@ def execute(config, recipe_config):
         elif 'addition type' in hop and hop['addition type'] == FIRST_WORT_HOPPING:
             boil_time = 20
         elif 'addition type' not in hop:
-            raise ValueError('Boil time not specified for {0:s}; exiting.'.format(hop.get('name', '')))
+            msg = 'Boil time not specified for {0:s}; exiting.'
+            raise ValueError(msg.format(hop.get('name', '')))
 
-        utilization = hop_utilization(wort_gravity, boil_time, hop.get('addition type', None))
+        utilization = hop_utilization(wort_gravity, boil_time,
+                                      hop.get('addition type', None))
 
         if 'mass' in hop:
             mass = up.convert(hop['mass'], 'ounces')
         else:
-            raise ValueError('Mass not specified for {0:s}; exiting.'.format(hop.get('name', '')))
+            msg = 'Mass not specified for {0:s}; exiting.'
+            raise ValueError(msg.format(hop.get('name', '')))
 
         if 'alpha acids' in hop:
             alpha_acids = hop['alpha acids'] / 100.
-        elif 'name' in hop and hop['name'] in config['hop'] and 'alpha acids' in config['hop'][hop['name']]:
+        elif ('name' in hop and hop['name'] in config['hop']
+              and 'alpha acids' in config['hop'][hop['name']]):
             alpha_acids = config['hop'][hop['name']]['alpha acids'] / 100.
         elif utilization > 0:
-            raise ValueError('Alpha Acids not specified for {0:s}; exiting.'.format(hop.get('name', '')))
+            msg = 'Alpha Acids not specified for {0:s}; exiting.'
+            raise ValueError(msg.format(hop.get('name', '')))
 
-        ibus = ibu_contribution(alpha_acids, mass, water_volume, utilization, hop.get('type', 'pellets'))
+        ibus = ibu_contribution(alpha_acids, mass, water_volume, utilization,
+                                hop.get('type', 'pellets'))
 
         if 'boil_time' in hop:
-            print('{time}-minute addition: {ibu:0.1f} IBUs'.format(time=boil_time, ibu=ibus))
+            msg = '{time}-minute addition: {ibu:0.1f} IBUs'
+            print(msg.format(time=boil_time, ibu=ibus))
         elif 'addition type' in hop and hop['addition type'] == FIRST_WORT_HOPPING:
             print('First-wort hopping addition: {ibu:0.1f} IBUs'.format(ibu=ibus))
         elif 'addition type' in hop and hop['addition type'] == FLAMEOUT:
