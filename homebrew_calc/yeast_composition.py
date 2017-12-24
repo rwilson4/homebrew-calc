@@ -135,7 +135,7 @@ def execute(config, recipe_config):
                 cells_needed = 750000
             else:
                 cells_needed = 1500000
-            
+
             up = unit_parser()
             pv = up.convert(recipe_config['Pitchable Volume'], 'milli_liters')
             degP = gravity_to_deg_plato(og)
@@ -153,7 +153,7 @@ if __name__ == '__main__':
     this_dir, this_filename = os.path.split(__file__)
     homebrew_config = os.path.join(this_dir, 'resources', 'homebrew.json')
     config = json.load(open(homebrew_config, 'r'))
-    
+
     parser = argparse.ArgumentParser()
     parser.add_argument('recipe', type=str, help='Recipe JSON')
     parser.add_argument('-o', '--output', type=str, help='Output file')
