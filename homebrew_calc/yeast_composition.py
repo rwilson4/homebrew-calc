@@ -71,12 +71,12 @@ def predict_final_gravity(og, attenuation):
     return og - attenuation * (og - 1.)
 
 
-def gravity_to_deg_plato(og):
+def gravity_to_deg_plato(sg):
     """Convert gravity to degrees Plato.
 
     Parameters
     ----------
-    og : float
+    sg : float
         Original gravity, like 1.053
 
     Returns
@@ -85,7 +85,24 @@ def gravity_to_deg_plato(og):
         Degrees Plato, like 13.5
 
     """
-    return 250. * (og - 1.)
+    return 250. * (sg - 1.)
+
+
+def deg_plato_to_gravity(deg_plato):
+    """Convert degrees Plato to specific gravity.
+
+    Parameters
+    ----------
+    deg_plato : float
+        Degrees Plato, like 13.5
+
+    Returns
+    -------
+    sg : float
+        Specific gravity, like 1.053
+
+    """
+    return 1. + (deg_plato / 250.)
 
 
 def execute(config, recipe_config):
