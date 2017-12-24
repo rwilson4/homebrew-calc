@@ -58,7 +58,7 @@ def wort_srm(mcu, vol_gal):
         SRM.
 
     """
-    return 1.49 * (mcu / pitchable_volume) ** 0.69
+    return 1.49 * (mcu / vol_gal) ** 0.69
 
 
 def execute(config, recipe_config):
