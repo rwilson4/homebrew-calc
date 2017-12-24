@@ -1,44 +1,42 @@
-#!/usr/bin/python
-
+from __future__ import print_function
 import json
 import sys
 from unit_parser import unit_parser
+from .malt_composition import specific_gravity_to_gravity_points
+
 
 def execute(config, recipe_config):
     if 'Mash' not in recipe_config or 'type' not in recipe_config['Mash']:
-        print 'Mash information not provided'
-        sys.exit()
+        raise ValueError('Mash information not provided')
 
     if recipe_config['Mash']['type'] == 'Infusion':
         config, recipe_config = infusion_mash(config, recipe_config)
     elif recipe_config['Mash']['type'] == 'Step':
         config, recipe_config = step_mash(config, recipe_config)
     else:
-        print 'Not supported.'
-        sys.exit()
+        raise ValueError('Mash type not supported.')
 
-    print '\n'
+    print('')
     config, recipe_config = lauter(config, recipe_config)
-    print '\n'
+    print('')
     config, recipe_config = boil(config, recipe_config)
 
     if 'Output' in config:
         with open(config['Output'], 'w') as outfile:
             json.dump(recipe_config, outfile, indent=2, sort_keys=True)
 
+
 def step_mash(config, recipe_config):
     """ Mash with multiple steps. """
 
     if 'steps' not in recipe_config['Mash']:
-        print 'Steps not specified; exiting.'
-        sys.exit()
+        raise ValueError('Steps not specified; exiting.')
 
     steps = recipe_config['Mash']['steps']
 
     for step in steps:
         if 'temperature' not in step or 'duration' not in step:
-            print 'Must specify temperature and duration for each step.'
-            sys.exit()
+            raise ValueError('Must specify temperature and duration for each step.')
 
     first_step = steps[0]
     mash_temp = fahrenheit_to_celsius(first_step['temperature'])
@@ -82,23 +80,34 @@ def step_mash(config, recipe_config):
 
     mtf = wtitwg - mcr * mash_duration
 
-    print 'Heat mash water ({0:.2f} gallons) to {1:.1f} degF.'.format(up.convert(mwv, 'liters', 'gallons'), celsius_to_fahrenheit(wtik))
+    msg = 'Heat mash water ({0:.2f} gallons) to {1:.1f} degF.'
+    mwv_gal = up.convert(mwv, 'liters', 'gallons')
+    print(msg.format(mwv_gal, celsius_to_fahrenheit(wtik)))
     if wtika is not None:
-        print 'Actual temperature achieved: {0:.1f} degF.'.format(celsius_to_fahrenheit(wtika))
+        msg = 'Actual temperature achieved: {0:.1f} degF.'
+        print(msg.format(celsius_to_fahrenheit(wtika)))
 
-    print 'After adding to mash tun (before adding grain), temperature is predicted to be {0:.1f} degF.'.format(celsius_to_fahrenheit(wtit))
-    print 'Allow water to cool to {0:.1f} degF before adding grain.'.format(celsius_to_fahrenheit(wtita))
+    msg = 'After adding to mash tun (before adding grain),'
+    msg += ' temperature is predicted to be {0:.1f} degF.'
+    print(msg.format(celsius_to_fahrenheit(wtit)))
+    msg = 'Allow water to cool to {0:.1f} degF before adding grain.'
+    print(msg.format(celsius_to_fahrenheit(wtita)))
     if wtitaa is not None:
-        print 'Actual temperature: {0:.1f} degF.'.format(celsius_to_fahrenheit(wtitaa))
+        msg = 'Actual temperature: {0:.1f} degF.'
+        print(msg.format(celsius_to_fahrenheit(wtitaa)))
 
-    print 'After adding grain and stirring, temperature is predicted to be {0:.1f} degF.'.format(celsius_to_fahrenheit(wtitwg))
+    msg = 'After adding grain and stirring, temperature is'
+    msg += ' predicted to be {0:.1f} degF.'
+    print(msg.format(celsius_to_fahrenheit(wtitwg)))
 
-    print 'After {0:.0f} minutes, mash temp is expected to decrease to {1:.1f} degF.'.format(up.convert(mash_duration, 'hours', 'minutes'), celsius_to_fahrenheit(mtf))
+    msg = 'After {0:.0f} minutes, mash temp is expected to decrease to {1:.1f} degF.'
+    md_min = up.convert(mash_duration, 'hours', 'minutes')
+    print(msg.format(md_min, celsius_to_fahrenheit(mtf)))
     if mtfa is not None:
-        print 'Actual temperature: {0:.1f} degF.'.format(celsius_to_fahrenheit(mtfa))
+        msg = 'Actual temperature: {0:.1f} degF.'
+        print(msg.format(celsius_to_fahrenheit(mtfa)))
     else:
         mtfa = mtf
-
 
     # Combined thermal mass
     ctm = mttm + mwtm + gtm
@@ -114,18 +123,25 @@ def step_mash(config, recipe_config):
         swv = swtm / (water_specific_heat * water_density)
         ctm += swtm
 
-        print 'To bring mash up to {0:.1f} degF, add {1:.1f} gallons boiling water.'.format(celsius_to_fahrenheit(step_temp), up.convert(swv, 'liters', 'gallons'))
+        msg = 'To bring mash up to {0:.1f} degF, add {1:.1f} gallons boiling water.'
+        swv_gal = up.convert(swv, 'liters', 'gallons')
+        print(msg.format(celsius_to_fahrenheit(step_temp), swv_gal))
 
         if 'Achieved Mash Temperature' in step:
-            print 'Temperature achieved: {0:.1f} degF'.format(step['Achieved Mash Temperature'])
+            msg = 'Temperature achieved: {0:.1f} degF'
+            print(msg.format(step['Achieved Mash Temperature']))
             step_temp = fahrenheit_to_celsius(step['Achieved Mash Temperature'])
 
         mtf = step_temp - mcr * step_duration
 
-        print 'After {0:.0f} minutes, temperature is predicted to drop to {1:.1f} degF.'.format(up.convert(step_duration, 'hours', 'minutes'), celsius_to_fahrenheit(mtf))
+        msg = 'After {0:.0f} minutes, temperature is'
+        msg += ' predicted to drop to {1:.1f} degF.'
+        sd_min = up.convert(step_duration, 'hours', 'minutes')
+        print(msg.format(sd_min, celsius_to_fahrenheit(mtf)))
 
         if 'Final Mash Temperature' in step:
-            print 'Actual temperature: {0:.1f} degF'.format(step['Final Mash Temperature'])
+            msg = 'Actual temperature: {0:.1f} degF'
+            print(msg.format(step['Final Mash Temperature']))
             mtfa = fahrenheit_to_celsius(step['Final Mash Temperature'])
         else:
             mtfa = mtf
@@ -133,9 +149,12 @@ def step_mash(config, recipe_config):
     swtm = ctm * (sparge_temp - mtfa) / (boiling_temp - sparge_temp)
     swv = swtm / (water_specific_heat * water_density)
 
-    print 'To mash out at {0:.1f} degF, add {1:.1f} gallons boiling water.'.format(celsius_to_fahrenheit(sparge_temp), up.convert(swv, 'liters', 'gallons'))
+    msg = 'To mash out at {0:.1f} degF, add {1:.1f} gallons boiling water.'
+    swv_gal = up.convert(swv, 'liters', 'gallons')
+    print(msg.format(celsius_to_fahrenheit(sparge_temp), swv_gal))
 
     return config, recipe_config
+
 
 def infusion_mash(config, recipe_config):
     """ Simple infusion mash. """
@@ -239,6 +258,7 @@ def infusion_mash(config, recipe_config):
 
     return config, recipe_config
 
+
 def lauter(config, recipe_config):
     """ Collect pre-boil wort. """
 
@@ -255,8 +275,8 @@ def lauter(config, recipe_config):
         apbv = up.convert(recipe_config['Brew Day']['Pre-Boil Volume'], 'gallons')
         apbg = recipe_config['Brew Day']['Pre-Boil Gravity']
 
-        agp = gravity_points(apbg, apbv)
-        gp = gravity_points(pbg, pbv)
+        agp = specific_gravity_to_gravity_points(apbg, apbv)
+        gp = specific_gravity_to_gravity_points(pbg, pbv)
 
         if 'Brewhouse Efficiency' in recipe_config:
             planned_efficiency = recipe_config['Brewhouse Efficiency']
@@ -282,6 +302,7 @@ def lauter(config, recipe_config):
             recipe_config['Brew Day']['Pre-Boil Gravity'] = pbg
 
     return config, recipe_config
+
 
 def boil(config, recipe_config):
     """ Boil wort. """
@@ -345,8 +366,8 @@ def boil(config, recipe_config):
 
         post_bv = up.convert(recipe_config['Brew Day']['Post-Boil Volume'], 'gallons')
         og = recipe_config['Brew Day']['Original Gravity']
-        post_gp = gravity_points(og, post_bv)
-        pre_gp = gravity_points(pre_bg, pre_bv)
+        post_gp = specific_gravity_to_gravity_points(og, post_bv)
+        pre_gp = specific_gravity_to_gravity_points(pre_bg, pre_bv)
 
         if 'Brewhouse Efficiency' in recipe_config:
             planned_efficiency = recipe_config['Brewhouse Efficiency']
@@ -397,6 +418,7 @@ def boil(config, recipe_config):
             print 'Predicted original gravity: {0:.03f}'.format(recipe_config['Original Gravity'])
 
     return config, recipe_config
+
 
 def get_common_params(config, recipe_config):
     if 'Brew Day' in recipe_config and 'temperature' in recipe_config['Brew Day']:
@@ -479,8 +501,6 @@ def get_common_params(config, recipe_config):
     gtm = grain_mass * grain_specific_heat
     return ambient_temp, mwv, gtm, water_density, water_specific_heat, mttm, hlttm, hldt, hlit, mcr, sparge_temp, boiling_temp
 
-def gravity_points(specific_gravity, volume):
-    return 1000.0 * (specific_gravity - 1) * volume
 
 def fahrenheit_to_celsius(degf, difference=False):
     if difference:
@@ -488,15 +508,19 @@ def fahrenheit_to_celsius(degf, difference=False):
     else:
         return (5. / 9.) * (degf - 32.)
 
+
 def celsius_to_fahrenheit(degc, difference=False):
     if difference:
         return (9. / 5.) * degc
     else:
         return (9. / 5.) * degc + 32
 
+
 if __name__ == '__main__':
     import argparse
-    config = json.load(open('/Users/bobwilson/beer/bin/homebrew.json', 'r'))
+    this_dir, this_filename = os.path.split(__file__)
+    homebrew_config = os.path.join(this_dir, 'resources', 'homebrew.json')
+    config = json.load(open(homebrew_config, 'r'))
 
     parser = argparse.ArgumentParser()
     parser.add_argument('recipe', type=str, help='Recipe JSON')
