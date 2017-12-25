@@ -1,0 +1,228 @@
+# This file defines the units available.
+#
+# Units are defined according to their signature, which represents
+# their dimension.  For example, meters and feet have the same
+# signature (length) while meters, meters_squared, and seconds all
+# have different signatures.  We represent a signature as a vector of
+# non-negative integers. The length of this vector represents the
+# number of distinct quantities expressed by the specification. This
+# is for internal purposes only; the user should never even need to
+# know how we are representing units!
+#
+# The vector entries, in order, correspond to:
+# 1 length
+# 2 mass
+# 3 duration (time)
+# 4 angular size (e.g. degrees and radians)
+# 5 temperature differences
+# 6 electric charge
+#
+# So for example, meters have a signature of [1 0 0 0 0 0]
+# while meters_squared have a signature of [2 0 0 0 0 0]
+# and kilograms have a signature of [0 1 0 0 0 0].
+#
+# There are a small number of "unit primitives" defined
+# solely in terms of the signature, having an implicit
+# quantity of 1. Other units are defined relative to
+# these "unit primitives". For example, second is defined
+# as that unit having signature [0 0 1 0 0 0] and quantity 1,
+# (which is admittedly hard to grok), but then minutes are
+# defined simply and intuitively as 60 seconds.
+
+#### Dimensionless units ####
+unitless: [0 0 0 0 0 0]
+kilo: 1000 unitless
+centi: 0.01 unitless
+milli: 0.001 unitless
+micro: 0.001 milli
+nano: 0.001 micro
+
+#### Time units ####
+second: [0 0 1 0 0 0]
+seconds: 1 second
+sec: 1 second
+
+minute: 60 seconds
+minutes: 1 minute
+min: 1 minute
+
+hour: 60 minutes
+hours: 1 hour
+hr: 1 hour
+
+day: 24 hours
+days: 1 day
+# Source: 
+siderealDay: 86164.0916 seconds
+
+week: 7 days
+weeks: 1 week
+
+fortnight: 2 weeks
+fortnights: 1 fortnight
+
+year: 365 days
+years: 1 year
+
+##### Length units #####
+meter: [1 0 0 0 0 0]
+meters: 1 meter
+m: 1 meter
+
+kilometer: 1 kilo_meter
+kilometers: 1 kilometer
+km: 1 kilometer
+
+centimeter: 1 centi_meter
+centimeters: 1 centimeter
+cm: 1 centimeter
+
+millimeter: 1 milli_meter
+millimeters: 1 millimeter
+mm: 1 millimeter
+
+# Source:
+# https://en.wikipedia.org/wiki/Foot_(unit)#International_foot
+foot: 0.3048 meters
+feet: 1 foot
+ft: 1 foot
+
+# Source:
+# https://en.wikipedia.org/wiki/Yard
+yard: 0.9144 meters
+yards: 1 yard
+
+# Source:
+# https://en.wikipedia.org/wiki/Inch
+inch: 2.54 centimeters
+inches: 1 inch
+
+# Source:
+# https://en.wikipedia.org/wiki/Mile
+mile: 1609.344 meters
+miles: 1 mile
+
+# Source:
+# https://en.wikipedia.org/wiki/Mile#Nautical_mile
+nauticalMile: 1852 meters
+nauticalMiles: 1 nauticalMile
+nmi: 1 nauticalMile
+
+# Source:
+# https://en.wikipedia.org/wiki/Light-second
+lightSecond: 299792458 meters
+lightSeconds: 1 lightSecond
+lightDay: 86400 lightSeconds
+lightYear: 365.25 lightDay
+lightYears: 1 lightYear
+parsec: 3.26163344 lightYears
+
+#### Mass units ####
+kilogram: [0 1 0 0 0 0]
+kilograms: 1 kilogram
+kg: 1 kilogram
+gram: 0.001 kilogram
+grams: 1 gram
+
+# avoirdupois pound
+# Source:
+# https://en.wikipedia.org/wiki/Avoirdupois
+lbm: 0.45359237 kg
+pound: 1 lbm
+pounds: 1 pound
+lb: 1 pound
+
+# Ounces of mass
+ounce: 0.0625 pounds
+ounces: 1 ounce
+oz: 1 ounce
+
+#### Volume units ####
+milliliter: 1 centimeter_cubed
+milliliters: 1 milliliter
+ml: 1 milliliter
+
+liter: 1000 milliliters
+liters: 1 liter
+
+gallon: 231 inches_cubed
+gallons: 1 gallon
+gal: 1 gallon
+
+quart: 0.25 gallons
+quarts: 1 quart
+
+pint: 0.5 quarts
+pints: 1 pint
+
+cup: 0.5 pints
+cups: 1 cup
+
+fluidOunce: 0.125 cups
+fluidOunces: 1 fluidOunce
+
+tablespoon: 0.5 fluidOunces
+tablespoons: 1 tablespoon
+tbsp: 1 tablespoon
+
+teaspoon: 0.3333333 tablespoons
+teaspoons: 1 teaspoon
+tsp: 1 teaspoon
+
+#### Angular units ####
+radian: [0 0 0 1 0 0]
+radians: 1 radian
+degree: 0.01745329252 radian
+degrees: 1 degree
+deg: 1 degree
+
+#### Temperature units ####
+degC: [0 0 0 0 1 0]
+degF: 0.5555555555555 degC
+
+#### Velocity units ####
+mph: 1 mile_per_hour
+
+#### Force units ####
+newton: 1 kilogram_meter_per_second_squared
+newtons: 1 newton
+
+# Source
+# https://en.wikipedia.org/wiki/Pound_(force)
+lbf: 9.80665 lbm_meters_per_second_squared
+
+# slug is a unit of mass, but it is
+# actually defined in terms of lbf.
+# Source:
+# https://en.wikipedia.org/wiki/Slug_(unit)
+slug: 1 lbf_second_squared_per_foot
+
+#### Energy units ####
+joule: 1 newton_meter
+joules: 1 joule
+calorie: 4.184 joule
+calories: 1 calorie
+
+watt: 1 joule_per_second
+watts: 1 watt
+
+#### Pressure units ####
+pascal: 1 newton_per_meter_squared
+kpa: 1 kilo_pascal
+bar: 100 kpa
+atmosphere: 101.325 kpa
+atm: 1 atmosphere
+psi: 1 lbf_per_inch_squared
+
+#### Electric charge units ####
+coulomb: [0 0 0 0 0 1]
+
+#### Electric current units ####
+ampere: 1 coulomb_per_second
+
+#### Electric potential units ####
+volt: 1 newton_meter_per_coulomb
+
+#### Magnetic strength units ####
+tesla: 1 volt_second_per_meter_squared
+gauss: 0.0001 tesla

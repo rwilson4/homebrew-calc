@@ -110,7 +110,10 @@ def ibu_contribution(alpha_acids, mass_oz, boil_vol_gal, utilization,
 
 
 def execute(config, recipe_config):
-    up = unit_parser()
+    if 'units' in config:
+        up = unit_parser(config['units'])
+    else:
+        up = unit_parser()
 
     if 'Average Gravity' in recipe_config:
         wort_gravity = recipe_config['Average Gravity']
@@ -188,6 +191,9 @@ if __name__ == '__main__':
     hop_config_file = os.path.join(this_dir, 'resources', config['files']['hops'])
     hop_config = json.load(open(hop_config_file, 'r'))
     config['hop'] = hop_config
+
+    if 'units' in config['files']:
+        config['units'] = os.path.join(this_dir, 'resources', config['files']['units'])
 
     parser = argparse.ArgumentParser()
     parser.add_argument('recipe', type=str, help='Recipe JSON')

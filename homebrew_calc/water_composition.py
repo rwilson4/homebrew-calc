@@ -15,13 +15,19 @@ from unit_parser import unit_parser
 from scipy import interpolate
 import cvxpy as cvx
 from convert_pH_temp import convert_pH_temp
-from .malt_composition import gravity_points_to_specific_gravity
-from .malt_composition import specific_gravity_to_gravity_points
+from malt_composition import gravity_points_to_specific_gravity
+from malt_composition import specific_gravity_to_gravity_points
 
 
 def execute(config, recipe_config):
+    if 'units' in config:
+        config['unit_parser'] = unit_parser(config['units'])
+    else:
+        config['unit_parser'] = unit_parser()
+
     config, recipe_config = water_volume(config, recipe_config)
-    config, recipe_config = water_chemistry(config, recipe_config)
+    config, recipe_config = salt_additions(config, recipe_config)
+    config, recipe_config = mash_ph(config, recipe_config)
 
     if 'Output' in config:
         with open(config['Output'], 'w') as outfile:
@@ -29,15 +35,18 @@ def execute(config, recipe_config):
 
 
 def water_volume(config, recipe_config):
-    up = unit_parser()
+    """Determine water volume required.
+
+    """
+
+    up = config['unit_parser']
 
     if 'Boil Time' in recipe_config:
         boil_time = up.convert(recipe_config['Boil Time'], 'hours')
     elif 'Boil Time' in config:
         boil_time = up.convert(config['Boil Time'], 'hours')
     else:
-        print('Boil Length not specified.')
-        return config, recipe_config
+        raise ValueError('Boil Length not specified.')
 
     if 'Evaporation Rate' in recipe_config:
         evaporation_rate = up.convert(recipe_config['Evaporation Rate'],
@@ -45,16 +54,14 @@ def water_volume(config, recipe_config):
     elif 'Evaporation Rate' in config:
         evaporation_rate = up.convert(config['Evaporation Rate'], 'gallons_per_hour')
     else:
-        print('Evaporation Rate not specified.')
-        return config, recipe_config
+        raise ValueError('Evaporation Rate not specified.')
 
     if 'Trub Losses' in recipe_config:
         trub_losses = up.convert(recipe_config['Trub Losses'], 'gallons')
     elif 'Trub Losses' in config:
         trub_losses = up.convert(config['Trub Losses'], 'gallons')
     else:
-        print('Trub Losses not specified.')
-        return config, recipe_config
+        raise ValueError('Trub Losses not specified.')
 
     if 'Pitchable Volume' in recipe_config:
         pitchable_volume = up.convert(recipe_config['Pitchable Volume'], 'gallons')
@@ -72,35 +79,34 @@ def water_volume(config, recipe_config):
     recipe_config['Average Boil Volume'] = '{0:.06f} gallons'.format(average_boil_volume)
 
     if 'Absorption Rate' in recipe_config:
-        ar = up.convert(recipe_config['Absorption Rate'], 'gallons_per_pound')
+        abs_rate = up.convert(recipe_config['Absorption Rate'], 'gallons_per_pound')
     elif 'Absorption Rate' in config:
-        ar = up.convert(config['Absorption Rate'], 'gallons_per_pound')
+        abs_rate = up.convert(config['Absorption Rate'], 'gallons_per_pound')
     else:
-        ar = 0.2
+        abs_rate = 0.2
         msg = 'Absorption Rate not specified,'
         msg += ' assuming {0:.02f} gallons_per_pound.'
-        print(msg.format(ar))
+        print(msg.format(abs_rate))
 
-    if ar is not None:
-        mass = 0
-        for malt in recipe_config['Malt']:
-            if 'mass' in malt:
-                mass += up.convert(malt['mass'], 'pounds')
-        wltg = ar * mass
-    else:
-        wltg = 0.
+    grain_mass = 0
+    for malt in recipe_config['Malt']:
+        if 'mass' in malt:
+            grain_mass += up.convert(malt['mass'], 'pounds')
+
+    water_lost_to_grain = abs_rate * grain_mass
+    total_water = water_lost_to_grain + pre_boil_volume
 
     if 'Mash Water Volume' in recipe_config:
-        mwv = up.convert(recipe_config['Mash Water Volume'], 'gallons')
-        smwv = '{0:.06f} gallons'.format(wltg + pre_boil_volume - mwv)
-        recipe_config['Sparge and Mash-out Water Volume'] = smwv
+        mash_water_vol = up.convert(recipe_config['Mash Water Volume'], 'gallons')
+        smowv = total_water - mash_water_vol
+        sparge_mash_out_water_vol = '{0:.06f} gallons'.format(smowv)
+        recipe_config['Sparge and Mash-out Water Volume'] = sparge_mash_out_water_vol
         msg = 'Total Water: {0:.01f} gallons'
-        print(msg.format(wltg + pre_boil_volume))
+        print(msg.format(total_water))
     else:
         msg = 'Mash Water Volume not specified.'
         msg += ' Try running malt_composition first.'
-        print(msg)
-        print('Cannot compute water needs.')
+        raise ValueError(msg)
 
     if 'Original Gravity' in recipe_config:
         og = recipe_config['Original Gravity']
@@ -114,16 +120,20 @@ def water_volume(config, recipe_config):
     else:
         msg = 'Original Gravity not specified.'
         msg += ' Try running malt_composition first.'
-        print(msg)
-        print('Cannot compute pre-boil gravity.')
+        raise ValueError(msg)
 
     print('')
     return config, recipe_config
 
 
-def water_chemistry(config, recipe_config):
-    up = unit_parser()
+def salt_additions(config, recipe_config):
+    """Determines what salts (if any) to use.
+
+    """
+
+    up = config['unit_parser']
     A, target_composition, rac = get_targets(config, recipe_config)
+    num_minerals, num_ingredients = A.shape
 
     ingredients = ['Distilled water',
                    'Food-grade Chalk',
@@ -142,8 +152,8 @@ def water_chemistry(config, recipe_config):
                 'Total Alkalinity']
 
     target_rac = rac.dot(target_composition)
-    w = cvx.Variable(A.shape[1])
-    r = cvx.Variable(A.shape[0])
+    w = cvx.Variable(num_ingredients)
+    r = cvx.Variable(num_minerals)
     b = np.array([10, 1, 5, 0.001, 5, 10])
     complexity_penalty = 1.0
 
@@ -164,15 +174,15 @@ def water_chemistry(config, recipe_config):
                    r[4] * target_composition[2] == r[2] * target_composition[4], # Chloride to sulfate ratio
                    w[1] == 0, # No chalk
                    w[6] == 0, # No MgSO4
-
                    ]
 
     objective = cvx.Minimize(obj)
     prob = cvx.Problem(objective, constraints)
     prob.solve()
 
-    r = r.value.A.squeeze()
     w = w.value.A.squeeze()
+    # If the optimal water profile calls for less than 0.1 grams of a
+    # particular salt, just skip it.
     w[w < 0.1] = 0
     r = A.dot(w)
 
@@ -180,18 +190,18 @@ def water_chemistry(config, recipe_config):
     print('100% distilled water')
 
     recipe_config['Salts'] = {}
-    for i in range(1,len(w)):
+    for i in range(1, num_ingredients):
         if w[i] > 0:
-            sa = '{0:.04f} grams_per_gallon'.format(w[i])
-            recipe_config['Salts'][ingredients[i]] = sa
+            salt_amount = '{0:.04f} grams_per_gallon'.format(w[i])
+            recipe_config['Salts'][ingredients[i]] = salt_amount
             print('{0:.04f} grams per gallon {1:s}'.format(w[i], ingredients[i]))
 
     if 'Mash Water Volume' in recipe_config:
         print('')
-        mwv = up.convert(recipe_config['Mash Water Volume'], 'gallons')
-        for i in range(1, len(w)):
+        mash_water_vol = up.convert(recipe_config['Mash Water Volume'], 'gallons')
+        for i in range(1, num_ingredients):
             if w[i] > 0:
-                print('{0:.02f} grams {1:s} in mash'.format(w[i] * mwv, ingredients[i]))
+                print('{0:.02f} grams {1:s} in mash'.format(w[i] * mash_water_vol, ingredients[i]))
 
     if 'Lactic Acid' in recipe_config:
         lactic_tsp = up.convert(recipe_config['Lactic Acid'], 'tsp')
@@ -199,15 +209,16 @@ def water_chemistry(config, recipe_config):
 
     if 'Sparge and Mash-out Water Volume' in recipe_config:
         print('')
-        smwv = up.convert(recipe_config['Sparge and Mash-out Water Volume'], 'gallons')
-        for i in range(1, len(w)):
-            if w[i] > 0.1:
+        smowv = recipe_config['Sparge and Mash-out Water Volume']
+        smowv = up.convert(smowv, 'gallons')
+        for i in range(1, num_ingredients):
+            if w[i] > 0:
                 msg = '{0:.02f} grams {1:s} in sparge/mash-out water'
-                print(msg.format(w[i] * smwv, ingredients[i]))
+                print(msg.format(w[i] * smowv, ingredients[i]))
 
     print('')
     recipe_config['Water Profile Achieved'] = {}
-    for i in range(len(r)):
+    for i in range(num_minerals):
         recipe_config['Water Profile Achieved'][minerals[i]] = r[i]
         print('{0:.1f} ppm {1:s}'.format(r[i], minerals[i]))
 
@@ -227,19 +238,25 @@ def water_chemistry(config, recipe_config):
     print('Chloride to sulfate ratio: {0:.1f} ({1:s})'.format(r[4] / r[2], descriptor))
 
     config['r'] = r
+    return config, recipe_config
+
+
+def mash_ph(config, recipe_config):
+    """Estimates the pH of the mash.
+
+    """
+
+    up = config['unit_parser']
+
+    this_dir, this_filename = os.path.split(__file__)
+    mmole_config = os.path.join(this_dir, 'resources', config['water']['files']['mmole'])
+    data = np.genfromtxt(mmole_config, delimiter=',')
 
     target_mash_pH = [4.5, 8.5]
     tol = 1e-6
-    successful = True
     while (target_mash_pH[1] - target_mash_pH[0] > tol):
         pH = 0.5 * (target_mash_pH[0] + target_mash_pH[1])
-        try:
-            b = balance_eq(pH, config, recipe_config)
-        except:
-            print('Cannot compute mash pH.')
-            successful = False
-            break
-
+        b = balance_eq(pH, data, config, recipe_config)
         if b > 0:
             target_mash_pH[0] = pH
         else:
@@ -253,9 +270,11 @@ def water_chemistry(config, recipe_config):
         if m['name'] == 'Rice Hulls':
             continue
 
-        malt_mass += up.convert(m.get('mass', 0), 'kilograms')
-        if m['name'] == 'Acidulated Malt':
-            acidulated_mass += up.convert(m.get('mass', 0), 'kilograms')
+        if 'mass' in m:
+            malt_mass += up.convert(m['mass'], 'kilograms')
+
+        if m['name'] == 'Acidulated Malt' and 'mass' in m:
+            acidulated_mass += up.convert(m['mass'], 'kilograms')
 
     acidulated_delta = 100 * 0.1 * acidulated_mass / malt_mass
     pH -= acidulated_delta
@@ -265,18 +284,20 @@ def water_chemistry(config, recipe_config):
     pH_range_low = convert_pH_temp(5.4, 77, pH_temp)
     pH_range_high = convert_pH_temp(5.7, 77, pH_temp)
 
-    if successful:
-        recipe_config['Mash pH'] = pH
-        recipe_config['pH Reference Temperature'] = pH_temp
-        msg = 'Mash pH: {0:.03f} at {1:.0f} degF (target between'
-        msg += ' {2:.03f} and {3:.03f})'
-        print(msg.format(pH, pH_temp, pH_range_low, pH_range_high))
+    recipe_config['Mash pH'] = pH
+    recipe_config['pH Reference Temperature'] = pH_temp
+    msg = 'Mash pH: {0:.03f} at {1:.0f} degF (target between'
+    msg += ' {2:.03f} and {3:.03f})'
+    print(msg.format(pH, pH_temp, pH_range_low, pH_range_high))
 
     return config, recipe_config
 
 
-def balance_eq(mash_pH, config, recipe_config):
-    up = unit_parser()
+def balance_eq(mash_pH, data, config, recipe_config):
+    """Computes the mash pH misbalance.
+
+    """
+    up = config['unit_parser']
     baseline_pH = 4.3
 
     r = config['r']
@@ -344,7 +365,9 @@ def balance_eq(mash_pH, config, recipe_config):
             malt_buffering_capacity.append(0.)
             acids.append(1)
 
-        elif x['name'] in config['malt'] and 'type' in config['malt'][x['name']] and config['malt'][x['name']]['type'] == 'crystal' and 'degrees lovibond' in config['malt'][x['name']]:
+        elif (x['name'] in config['malt'] and 'type' in config['malt'][x['name']]
+              and config['malt'][x['name']]['type'] == 'crystal'
+              and 'degrees lovibond' in config['malt'][x['name']]):
 
             color = config['malt'][x['name']]['degrees lovibond']
             malt_acidity.append(0.45 * color + 6)
@@ -357,9 +380,11 @@ def balance_eq(mash_pH, config, recipe_config):
             malt_dipH.append(0.)
             malt_buffering_capacity.append(0.)
             acids.append(1)
-            #print('Acdidity for {0:s} not specified; assuming 0.'.format(x['name']))
 
-        malt_mass.append(up.convert(x.get('mass', '0 kg'), 'kg'))
+        if 'mass' in x:
+            malt_mass.append(up.convert(x['mass'], 'kilograms'))
+        else:
+            malt_mass.append(0.)
 
     malt_dipH = np.array(malt_dipH)
     malt_buffering_capacity = np.array(malt_buffering_capacity)
@@ -368,8 +393,8 @@ def balance_eq(mash_pH, config, recipe_config):
     malt_mass = np.array(malt_mass)
 
     total_alkalinity = (r[5] - (100 / 0.17) * lactic_acid_volume / water_volume) / 50 # mEq / L
-    delta_c0 = charge_per_mmole(baseline_pH, config) - charge_per_mmole(brewing_water_pH, config)
-    delta_cz = charge_per_mmole(mash_pH, config) - charge_per_mmole(brewing_water_pH, config)
+    delta_c0 = charge_per_mmole(baseline_pH, data) - charge_per_mmole(brewing_water_pH, data)
+    delta_cz = charge_per_mmole(mash_pH, data) - charge_per_mmole(brewing_water_pH, data)
 
     z_alkalinity = total_alkalinity * delta_cz / delta_c0
     z_ra = z_alkalinity - (r[0] * 2 / 40.078) / 3.5 - (r[1] * 2 / 24.305) / 7
@@ -387,8 +412,7 @@ def balance_eq(mash_pH, config, recipe_config):
     return balance
 
 
-def charge_per_mmole(pH, config):
-    data = np.genfromtxt(config['water']['files']['mmole'], delimiter=',')
+def charge_per_mmole(pH, data):
     f = interpolate.interp1d(data[:,0], data[:,1])
     return f(pH)
 
@@ -458,6 +482,9 @@ if __name__ == '__main__':
     malt_config_file = os.path.join(this_dir, 'resources', config['files']['malt'])
     malt_config = json.load(open(malt_config_file, 'r'))
     config['malt'] = malt_config
+
+    if 'units' in config['files']:
+        config['units'] = os.path.join(this_dir, 'resources', config['files']['units'])
 
     parser = argparse.ArgumentParser()
     parser.add_argument('recipe', type=str, help='Recipe JSON')

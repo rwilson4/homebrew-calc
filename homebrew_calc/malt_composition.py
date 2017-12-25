@@ -63,7 +63,10 @@ def wort_srm(mcu, vol_gal):
 
 
 def execute(config, recipe_config):
-    up = unit_parser()
+    if 'units' in config:
+        up = unit_parser(config['units'])
+    else:
+        up = unit_parser()
 
     if 'Brewhouse Efficiency' in recipe_config:
         brewhouse_efficiency = recipe_config['Brewhouse Efficiency']
@@ -157,6 +160,9 @@ if __name__ == '__main__':
     malt_config_file = os.path.join(this_dir, 'resources', config['files']['malt'])
     malt_config = json.load(open(malt_config_file, 'r'))
     config['malt'] = malt_config
+
+    if 'units' in config['files']:
+        config['units'] = os.path.join(this_dir, 'resources', config['files']['units'])
 
     parser = argparse.ArgumentParser()
     parser.add_argument('recipe', type=str, help='Recipe JSON')
