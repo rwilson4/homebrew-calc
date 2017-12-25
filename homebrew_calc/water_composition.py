@@ -14,9 +14,53 @@ import numpy as np
 from unit_parser import unit_parser
 from scipy import interpolate
 import cvxpy as cvx
-from convert_pH_temp import convert_pH_temp
 from malt_composition import gravity_points_to_specific_gravity
 from malt_composition import specific_gravity_to_gravity_points
+
+
+def convert_pH_temp(pH, original_temperature, desired_temperature):
+    """Convert pH between temperatures.
+
+    Parameters
+    ----------
+     pH : float
+        pH as measured.
+     original_temperature : float
+        Measurement temperature, in degrees Fahrenheit.
+     desired_temperature : float
+        Temperature relative to which to express the pH.
+
+    Returns
+    -------
+     pH : float
+        The pH that would be measured at the desired temperature.
+
+    Notes
+    -----
+     The pH measured by a probe will vary based on the temperature of
+     the sample for two reasons. The first is that the probe itself
+     works according to electrochemical principles that vary according
+     to the temperature. This is specific to the probe and has nothing
+     to do with what is being measured. Many probes are branded as
+     having "Automatic Temperature Correction" or "ATC", and those
+     probes correct for this first phenomenon automatically.
+
+     The second reason for variation is due to the intrinsic pH
+     dependency on the temperature of the sample. Basically, the same
+     substance at different temperatures really does have different pH
+     levels. The variation depends on the substance and thus cannot
+     automatically be corrected for by the probe, since the probe
+     would have to know the details of the substance. For beer, a
+     rough linear relationship holds over a range of desirable
+     temperatures.
+
+     This function permits the brewer to measure the sample at any
+     temperature (provided it is reasonably close to room temperature;
+     to do otherwise risks damage to the probe), and convert the
+     measurement to a reference temperature for assessment.
+
+    """
+    return pH - 0.003 * (desired_temperature - original_temperature)
 
 
 def execute(config, recipe_config):
@@ -392,9 +436,11 @@ def balance_eq(mash_pH, data, config, recipe_config):
     acids = np.array(acids)
     malt_mass = np.array(malt_mass)
 
+    charge_per_mmole = interpolate.interp1d(data[:, 0], data[:, 1])
+
     total_alkalinity = (r[5] - (100 / 0.17) * lactic_acid_volume / water_volume) / 50 # mEq / L
-    delta_c0 = charge_per_mmole(baseline_pH, data) - charge_per_mmole(brewing_water_pH, data)
-    delta_cz = charge_per_mmole(mash_pH, data) - charge_per_mmole(brewing_water_pH, data)
+    delta_c0 = charge_per_mmole(baseline_pH) - charge_per_mmole(brewing_water_pH)
+    delta_cz = charge_per_mmole(mash_pH) - charge_per_mmole(brewing_water_pH)
 
     z_alkalinity = total_alkalinity * delta_cz / delta_c0
     z_ra = z_alkalinity - (r[0] * 2 / 40.078) / 3.5 - (r[1] * 2 / 24.305) / 7
@@ -410,11 +456,6 @@ def balance_eq(mash_pH, data, config, recipe_config):
 
     balance = mw_alkalinity + malt_alkalinity
     return balance
-
-
-def charge_per_mmole(pH, data):
-    f = interpolate.interp1d(data[:,0], data[:,1])
-    return f(pH)
 
 
 def get_targets(config, recipe_config):
