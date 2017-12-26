@@ -33,7 +33,7 @@ setup(name='homebrew_calc',
               'hop_composition=homebrew_calc.hop_composition:main',
               'yeast_composition=homebrew_calc.yeast_composition:main',
               'abvcalc=homebrew_calc.yeast_composition:abvcalc_main',
-              'convert_pH_temp=homebrew_calc.water_composition:convert_pH_temp_main'
+              'convert_ph_temp=homebrew_calc.water_composition:convert_pH_temp_main'
           ]
       },
       zip_safe=False)
