@@ -190,7 +190,7 @@ def execute(config, recipe_config):
                                 hop.get('type', 'pellets'))
 
         if 'boil_time' in hop:
-            msg = '{time}-minute addition: {ibu:0.1f} IBUs'
+            msg = '{time:.0f}-minute addition: {ibu:0.1f} IBUs'
             print(msg.format(time=boil_time, ibu=ibus))
         elif 'addition type' in hop and hop['addition type'] == FIRST_WORT_HOPPING:
             print('First-wort hopping addition: {ibu:0.1f} IBUs'.format(ibu=ibus))
@@ -200,7 +200,7 @@ def execute(config, recipe_config):
         total_ibus += ibus
 
     recipe_config['IBUs'] = total_ibus
-    print('IBUs: {0:.1f}'.format(recipe_config['IBUs']))
+    print('Total IBUs: {0:.1f}'.format(recipe_config['IBUs']))
 
     if 'Output' in config:
         with open(config['Output'], 'w') as outfile:
