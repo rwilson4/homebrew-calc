@@ -10,14 +10,26 @@ setup(name='homebrew_calc',
       author_email='bob@convexanalytics.com',
       licence='Apache 2.0',
       packages=['homebrew_calc'],
+      classifiers=[
+          "Development Status :: 3 - Alpha",
+          "Environment :: Console",
+          "Topic :: Utilities",
+          "License :: OSI Approved :: Apache Software License"
+      ],
+      install_requires=[
+          "unit_parser",
+          "numpy",
+          "scipy",
+          "cvxpy"
+      ],
       include_package_data=True,
       package_data={
           'homebrew_calc': ['resources/*']
       },
       entry_points={
           'console_scripts': [
-              'abvcalc=homebrew_calc.abvcalc:execute',
-              'convert_pH_temp=homebrew_calc.convert_pH_temp:execute',
+              'abvcalc=homebrew_calc.yeast_composition:abvcalc_main',
+              'convert_pH_temp=homebrew_calc.water_composition:convert_pH_temp_main',
           ]
       },
       zip_safe=False)

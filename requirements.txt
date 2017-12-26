@@ -1,1 +1,5 @@
-unit-parser
+unit_parser
+cvxpy
+numpy
+scipy
+
