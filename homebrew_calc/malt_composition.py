@@ -63,6 +63,9 @@ def wort_srm(mcu, vol_gal):
 
 
 def main():
+    """Entry point for malt_composition script.
+
+    """
     import argparse
 
     this_dir, this_filename = os.path.split(__file__)
@@ -89,6 +92,73 @@ def main():
 
 
 def execute(config, recipe_config):
+    """Calculations relevant to malt characteristics.
+
+    Note: required parameters are in either config or
+    recipe_config. Where applicable, if a parameter is specified in
+    both config and recipe_config, the latter overrides the former.
+
+    Parameters
+    ----------
+     'Brewhouse Efficiency' : float
+        Efficiency of sugar extraction process. Defaults to 70% if
+        missing from both recipe_config and config.
+     'Pitchable Volume' : str
+        String representing the final volume of wort in which yeast
+        will be pitched, e.g. '5 gallons'. Defaults to '5.25 gallons'
+        if missing from both recipe_config and config.
+     'Malt' : array_like
+        Array of grist components (not necessarily malted). Each
+        component is specified by a collection of key-value pairs
+        describing its mass, sugar content, and color. See below.
+     'Water to Grist Ratio' : string
+        String representing the ratio of mash water to grist mass,
+        with dimensions of volume per mass. Something in the range of
+        1 to 1.5 quarts per pound is typical, with 1.2 quarts per
+        pound used as the default.
+
+
+    Malt Parameters
+    ---------------
+     'mass' : string
+        String representing the mass of the grain, e.g. '5
+        pounds'. Note here that 'pound' is interpreted as 'pounds of
+        mass' not 'pounds of force'. Ounces are also interpreted as
+        units of mass.
+     'ppg' : float
+        Gravity points per pound per gallon. For example, if ppg = 30,
+        assuming 100% brewhouse efficiency, adding one pound of grain
+        to one gallon of water would yield a specific gravity of 1.030.
+     'extract potential' : float
+        Gravity points, as expressed relative to pure sucrose. Sucrose
+        has 46 ppg, so an extract potential of 0.8 has 0.8 * 46 = 37
+        ppg. If both ppg and extract potential are specified for a
+        malt, ppg is used.
+
+        If neither are specified, 0 ppg is used. This is occasionally
+        helpful when using adjuncts like rice hulls that do not
+        contribute to the wort gravity, but is also slightly dangerous
+        if a typo is made in the recipe formulation. It might be
+        better to throw an error in this case.
+     'degrees lovibond' : float
+        Degrees Lovibond of malt. This translates into the impact of
+        the malt on the color of the beer and is often specifically
+        listed as part of the name of the malt, like 'Crystal 60L'.
+
+    Returns
+    -------
+     This function does not return anything. Instead it prints the
+     below parameters to STDOUT, and, if requested, appends them to
+     the recipe_config before printing to file.
+
+     'Mash Water Volume' : string
+        Amount of mash water needed, in gallons.
+     'Original Gravity' : float
+        Predicted specific gravity of wort before pitching yeast.
+     'SRM' : float
+        Predicted SRM (color) of wort.
+
+    """
     if 'units' in config:
         up = unit_parser(config['units'])
     else:
@@ -160,9 +230,15 @@ def execute(config, recipe_config):
         msg += ' assuming 1.2 quarts_per_pound'
         print(msg)
 
-    water_volume = wtgr * total_mass
-    recipe_config['Mash Water Volume'] = '{0:.6f} gallons'.format(water_volume)
+    water_volume = '{0:.6f} gallons'.format(wtgr * total_mass)
+    if (('Preferred Units' in config
+         and 'volume' in config['Preferred Units']
+         and config['Preferred Units'] != 'gallons')):
+        vol_units = config['Preferred Units']['volume']
+        water_volume = up.convert(water_volume, vol_units)
+        water_volume = '{0:.6f} {1:s}'.format(water_volume, vol_units)
 
+    recipe_config['Mash Water Volume'] = water_volume
     og = gravity_points_to_specific_gravity(gravity_points, pitchable_volume)
     recipe_config['Original Gravity'] = og
     recipe_config['SRM'] = wort_srm(mcu, pitchable_volume)

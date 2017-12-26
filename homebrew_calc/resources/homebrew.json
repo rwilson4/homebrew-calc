@@ -5,6 +5,9 @@
     "water": "water.json",
     "units": "units.txt"
   },
+  "Preferred Units": {
+    "volume": "gallons"
+  },
   "Brewhouse Efficiency": 0.7,
   "Absorption Rate": "0.25 gallons_per_pound",
   "Trub Losses": "0.25 gallons",
