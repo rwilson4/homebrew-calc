@@ -16,7 +16,7 @@ def abvcalc_main():
     att = 100.0 * attenuation(args.og, args.fg)
     print('{0:.02f}% ABV'.format(abv))
     print('{0:.0f}% Attenuation'.format(att))
-    
+
 
 def abv_calc(og, fg, simple=None):
     """Computes ABV from OG and FG.
@@ -118,6 +118,28 @@ def deg_plato_to_gravity(deg_plato):
     return 1. + (deg_plato / 250.)
 
 
+def main():
+    import argparse
+
+    this_dir, this_filename = os.path.split(__file__)
+    homebrew_config = os.path.join(this_dir, 'resources', 'homebrew.json')
+    config = json.load(open(homebrew_config, 'r'))
+
+    if 'units' in config['files']:
+        config['units'] = os.path.join(this_dir, 'resources', config['files']['units'])
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('recipe', type=str, help='Recipe JSON')
+    parser.add_argument('-o', '--output', type=str, help='Output file')
+
+    args = parser.parse_args()
+    recipe_config = json.load(open(args.recipe, 'r'))
+    if args.output:
+        config['Output'] = args.output
+
+    execute(config, recipe_config)
+
+
 def execute(config, recipe_config):
     # Viability
     # Starter calculation
@@ -165,22 +187,4 @@ def execute(config, recipe_config):
 
 
 if __name__ == '__main__':
-    import argparse
-
-    this_dir, this_filename = os.path.split(__file__)
-    homebrew_config = os.path.join(this_dir, 'resources', 'homebrew.json')
-    config = json.load(open(homebrew_config, 'r'))
-
-    if 'units' in config['files']:
-        config['units'] = os.path.join(this_dir, 'resources', config['files']['units'])
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('recipe', type=str, help='Recipe JSON')
-    parser.add_argument('-o', '--output', type=str, help='Output file')
-
-    args = parser.parse_args()
-    recipe_config = json.load(open(args.recipe, 'r'))
-    if args.output:
-        config['Output'] = args.output
-
-    execute(config, recipe_config)
+    main()

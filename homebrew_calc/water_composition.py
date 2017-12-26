@@ -77,6 +77,36 @@ def convert_pH_temp(pH, original_temperature, desired_temperature):
     return pH - 0.003 * (desired_temperature - original_temperature)
 
 
+def main():
+    import argparse
+
+    this_dir, this_filename = os.path.split(__file__)
+    homebrew_config = os.path.join(this_dir, 'resources', 'homebrew.json')
+    config = json.load(open(homebrew_config, 'r'))
+
+    water_config_file = os.path.join(this_dir, 'resources', config['files']['water'])
+    water_config = json.load(open(water_config_file, 'r'))
+    config['water'] = water_config
+
+    malt_config_file = os.path.join(this_dir, 'resources', config['files']['malt'])
+    malt_config = json.load(open(malt_config_file, 'r'))
+    config['malt'] = malt_config
+
+    if 'units' in config['files']:
+        config['units'] = os.path.join(this_dir, 'resources', config['files']['units'])
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('recipe', type=str, help='Recipe JSON')
+    parser.add_argument('-o', '--output', type=str, help='Output file')
+
+    args = parser.parse_args()
+    recipe_config = json.load(open(args.recipe, 'r'))
+    if args.output:
+        config['Output'] = args.output
+
+    execute(config, recipe_config)
+
+
 def execute(config, recipe_config):
     if 'units' in config:
         config['unit_parser'] = unit_parser(config['units'])
@@ -524,30 +554,4 @@ def get_targets(config, recipe_config):
 
 
 if __name__ == '__main__':
-    import argparse
-
-    this_dir, this_filename = os.path.split(__file__)
-    homebrew_config = os.path.join(this_dir, 'resources', 'homebrew.json')
-    config = json.load(open(homebrew_config, 'r'))
-
-    water_config_file = os.path.join(this_dir, 'resources', config['files']['water'])
-    water_config = json.load(open(water_config_file, 'r'))
-    config['water'] = water_config
-
-    malt_config_file = os.path.join(this_dir, 'resources', config['files']['malt'])
-    malt_config = json.load(open(malt_config_file, 'r'))
-    config['malt'] = malt_config
-
-    if 'units' in config['files']:
-        config['units'] = os.path.join(this_dir, 'resources', config['files']['units'])
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('recipe', type=str, help='Recipe JSON')
-    parser.add_argument('-o', '--output', type=str, help='Output file')
-
-    args = parser.parse_args()
-    recipe_config = json.load(open(args.recipe, 'r'))
-    if args.output:
-        config['Output'] = args.output
-
-    execute(config, recipe_config)
+    main()
