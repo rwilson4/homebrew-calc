@@ -190,6 +190,8 @@ def execute(config, recipe_config):
      use. Starter size calculations have not yet been implemented but
      are very imortant!
 
+    Fields Appended to recipe_config
+    --------------------------------
      'Final Gravity' : float
         Predicted final gravity of beer.
      'Alcohol by Volume' : float

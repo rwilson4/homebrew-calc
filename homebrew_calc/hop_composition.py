@@ -110,6 +110,9 @@ def ibu_contribution(alpha_acids, mass_oz, boil_vol_gal, utilization,
 
 
 def main():
+    """Entry point for hop_composition command line script.
+
+    """
     import argparse
 
     this_dir, this_filename = os.path.split(__file__)
@@ -136,6 +139,60 @@ def main():
 
 
 def execute(config, recipe_config):
+    """Calculations relevent to hop characteristics.
+
+    Note: required parameters are in either config or
+    recipe_config. Where applicable, if a parameter is specified in
+    both config and recipe_config, the latter overrides the former.
+
+    Parameters
+    ----------
+     'Average Gravity' : float
+        Average specific gravity of the boil, e.g. from
+        water_composition.
+     'Pitchable Volume' : string
+        String representing the final volume of wort in which yeast
+        will be pitched, e.g. '5 gallons'. Defaults to '5.25 gallons'
+        if missing from both recipe_config and config.
+     'Hops' : array_like
+        Array of hop additions. Each addition is specified by a
+        collection of key-value pairs as described below.
+
+    Hop Parameters
+    --------------
+     'addition type' : string
+        Specifies what type of hop addition it is. One of 'first wort
+        hopping', 'flameout', 'timed', or 'dry hop'
+     'boil_time' : string
+        String specifying how long the hop is boiled. Only required
+        for 'timed' addition type.
+     'mass' : string
+        String specifying the mass of the addition. Ounces and pounds
+        are considered units of mass for these purposes.
+     'alpha acids' : float
+        Alpha acid content of hop. For convenience/confusion, this is
+        specified as, for example, '4.5' to represent 4.5% instead of
+        0.045. This is because alpha acide content is typically
+        between 1% and 15%, and I just think it's easier to
+        read. Baseline alpha acids are specified in config, but actual
+        content can vary from year to year and harvest to harvest, so
+        it is best to include the actual value with every recipe.
+
+    Returns
+    -------
+
+     This function does not return anything. Instead it prints the
+     contribution of each hop addition to the IBUs of the final
+     product, then the total IBUs. The latter are appended to
+     recipe_config, and if requested, saved to file.
+
+    Fields Appended to recipe_config
+    --------------------------------
+    'IBUs' : float
+        Estimated bitterness level of beer.
+
+    """
+
     if 'units' in config:
         up = unit_parser(config['units'])
     else:

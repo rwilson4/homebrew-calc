@@ -151,6 +151,8 @@ def execute(config, recipe_config):
      below parameters to STDOUT, and, if requested, appends them to
      the recipe_config before printing to file.
 
+    Fields Appended to recipe_config
+    --------------------------------
      'Mash Water Volume' : string
         Amount of mash water needed, in gallons.
      'Original Gravity' : float
