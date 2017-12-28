@@ -32,6 +32,7 @@ setup(name='homebrew_calc',
               'water_composition=homebrew_calc.water_composition:main',
               'hop_composition=homebrew_calc.hop_composition:main',
               'yeast_composition=homebrew_calc.yeast_composition:main',
+              'brew_day=homebrew_calc.brew_day:main',
               'abvcalc=homebrew_calc.yeast_composition:abvcalc_main',
               'convert_ph_temp=homebrew_calc.water_composition:convert_pH_temp_main'
           ]
