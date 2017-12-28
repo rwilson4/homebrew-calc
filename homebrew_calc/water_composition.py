@@ -19,6 +19,9 @@ from malt_composition import specific_gravity_to_gravity_points
 
 
 def convert_pH_temp_main():
+    """Entry point for convert_ph_temp command line script.
+
+    """
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('pH', type=float, help='pH')
@@ -78,6 +81,9 @@ def convert_pH_temp(pH, original_temperature, desired_temperature):
 
 
 def main():
+    """Entry point for water_composition command line script.
+
+    """
     import argparse
 
     this_dir, this_filename = os.path.split(__file__)
@@ -108,14 +114,22 @@ def main():
 
 
 def execute(config, recipe_config):
+    """Light wrapper for other functions.
+
+    First we compute the water volume required. If the desired water
+    profile is part of the recipe, we determine the requisite salts to
+    add, and compute the mash pH.
+
+    """
     if 'units' in config:
         config['unit_parser'] = unit_parser(config['units'])
     else:
         config['unit_parser'] = unit_parser()
 
     config, recipe_config = water_volume(config, recipe_config)
-    config, recipe_config = salt_additions(config, recipe_config)
-    config, recipe_config = mash_ph(config, recipe_config)
+    if 'Water Profile' in recipe_config:
+        config, recipe_config = salt_additions(config, recipe_config)
+        config, recipe_config = mash_ph(config, recipe_config)
 
     if 'Output' in config:
         with open(config['Output'], 'w') as outfile:
@@ -124,6 +138,76 @@ def execute(config, recipe_config):
 
 def water_volume(config, recipe_config):
     """Determine water volume required.
+
+    Note: required parameters are in either config or
+    recipe_config. Where applicable, if a parameter is specified in
+    both config and recipe_config, the latter overrides the former.
+
+    Parameters
+    ----------
+     'Boil Time' : string
+        String representing the length of the boil, e.g. '1 hour'.
+     'Evaporation Rate' : string
+        String representing how quickly boiling water evaporates, with
+        dimensions of volume per time, e.g. '1
+        gallon_per_hour'. Evaporation rate depends on ambient
+        humidity, how windy it is, how strong the burner is, etc. I
+        find this to be one of the biggest sources of variation from
+        batch to batch. It might be best to use an evaporation rate
+        lower than expected, and adding extra (sanitary) water at the
+        end to make up for extra lost water.
+     'Trub Losses' : string
+        String representing how much volume of water is left in the
+        kettle at the end (all the gunk).
+     'Pitchable Volume' : string
+        String representing the final volume of wort in which yeast
+        will be pitched, e.g. '5 gallons'. Defaults to '5.25 gallons'
+        if missing from both recipe_config and config.
+     'Absorption Rate' : string
+        String representing the amount of mash water lost to grain
+        absorption, with dimension of volume (of water) per mass (of
+        grain), e.g. '0.2 gallons_per_pound'.
+     'Malt' : array_like
+        Array of grist components (not necessarily malted). This is
+        the same input as is used in malt_composition. See the
+        documentation there. (The only input used here is the mass,
+        which is needed to determine water absorption during the
+        mash.)
+     'Mash Water Volume' : string
+        Amount of mash water needed, in gallons. Output from
+        malt_composition.
+     'Original Gravity' : float
+        Predicted specific gravity of wort before pitching
+        yeast. Output from malt_composition.
+
+    Returns
+    -------
+     This function does not return anything. Instead, it appends the
+     following parameters to recipe_config, and if requested, saves
+     the latter to the specified file. It also prints the total water
+     volume required (that is, how much water to go buy at the store
+     or run through the RO filter, or whatever). It also prints the
+     predicted pre-boil gravity.
+
+    Fields Appended to recipe_config
+    --------------------------------
+     'Pre-Boil Volume' : string
+        String representing the pre-boil volume of wort, for the
+        purposes of assessing how much wort needs to be collected
+        during the sparge/lauter process.
+     'Average Boil Volume' : string
+        String representing the boil volume half-way through the boil,
+        for the purposes of estimating hop utilization.
+     'Sparge and Mash-out Water Volume' : string
+        String representing the total water needed for mashing-out and
+        sparging.
+     'Pre-Boil Gravity' : float
+        Predicted specific gravity of wort before the boil. This gives
+        a comparison point for assessing the efficiency of the mash on
+        brew day.
+     'Average Gravity' : float
+        Predicted specific gravity of wort half-way through the
+        boil. This is used for predicting hop utilization.
 
     """
 
@@ -216,6 +300,57 @@ def water_volume(config, recipe_config):
 
 def salt_additions(config, recipe_config):
     """Determines what salts (if any) to use.
+
+    Note: required parameters are in either config or
+    recipe_config. Where applicable, if a parameter is specified in
+    both config and recipe_config, the latter overrides the former.
+
+    Parameters
+    ----------
+     'Water Profile' : dict
+        Dictionary specifying the desired water profile, in terms of
+        the ppm of various minerals: calcium, magnesium, sulfate,
+        sodium, chloride, as well as the alkalinity of the water,
+        which can either be specified directly, or in terms of the
+        carbonate content.
+     'Mash Water Volume' : string
+        Amount of mash water needed, in gallons. Output from
+        malt_composition.
+     'Sparge and Mash-out Water Volume' : string
+        String representing the total water needed for mashing-out and
+        sparging.
+
+    Returns
+    -------
+     This function does not return anything. Instead, it appends the
+     following parameters to recipe_config, and if requested, saves
+     the latter to the specified file. It also prints how much of each
+     salt to add to the mash, and to the sparge/mash-out water. It
+     also shows whether the achieved water profile is conducive to
+     highlighting malty or hoppy flavors.
+
+    Fields Appended to recipe_config
+    --------------------------------
+     'Water' : dict
+        Collection of key-value pairs describing the recommended water
+        content. Currently, it is hard-coded to recommend 100%
+        distilled or Reverse-Osmosis (RO) water, but it might be
+        better to permit the user to describe their own tap water
+        profile which is often cheaper and just as good as starting
+        from distilled.
+     'Salts' : dict
+        Specifies amount of each salt to be added, in units of grams
+        per gallon.
+     'Water Profile Achieved' : dict
+        Collection of key-value pairs showing the achieved water
+        profile.
+
+    Notes
+    -----
+     This function uses cvxpy to solve a convex optimization problem
+     minimizing the discrepancy between the desired water profile and
+     that achieved by various salt additions. Various constraints
+     embody the recommendations of John Palmer in his Water book.
 
     """
 

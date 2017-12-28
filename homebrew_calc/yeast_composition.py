@@ -166,11 +166,11 @@ def execute(config, recipe_config):
         case, the parameter should be a sub-parameter of 'Brew
         Day'. If both are present, the 'Brew Day' parameter takes
         precedence.
-     'Pitchable Volume' : str
+     'Pitchable Volume' : string
         String representing the final volume of wort in which yeast
         will be pitched, e.g. '5 gallons'. Defaults to '5.25 gallons'
         if missing from both recipe_config and config.
-     'Ale or Lager' : str
+     'Ale or Lager' : string
         One of 'Ale' or 'Lager'. If not specified, defaults to 'Ale'.
 
     Yeast Parameters
