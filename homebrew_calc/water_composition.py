@@ -182,12 +182,11 @@ def water_volume(config, recipe_config):
 
     Returns
     -------
-     This function does not return anything. Instead, it appends the
-     following parameters to recipe_config, and if requested, saves
-     the latter to the specified file. It also prints the total water
-     volume required (that is, how much water to go buy at the store
-     or run through the RO filter, or whatever). It also prints the
-     predicted pre-boil gravity.
+     This function appends fields (documented below) to recipe_config
+     and returns both config (unmodified) and recipe_config. It also
+     prints the total water volume required (that is, how much water
+     to go buy at the store or run through the RO filter, or
+     whatever). It also prints the predicted pre-boil gravity.
 
     Fields Appended to recipe_config
     --------------------------------
@@ -322,12 +321,11 @@ def salt_additions(config, recipe_config):
 
     Returns
     -------
-     This function does not return anything. Instead, it appends the
-     following parameters to recipe_config, and if requested, saves
-     the latter to the specified file. It also prints how much of each
-     salt to add to the mash, and to the sparge/mash-out water. It
-     also shows whether the achieved water profile is conducive to
-     highlighting malty or hoppy flavors.
+     This function appends fields (documented below) to recipe_config
+     and returns both config (unmodified) and recipe_config. It also
+     prints how much of each salt to add to the mash, and to the
+     sparge/mash-out water. It also shows whether the achieved water
+     profile is conducive to highlighting malty or hoppy flavors.
 
     Fields Appended to recipe_config
     --------------------------------
@@ -467,6 +465,46 @@ def salt_additions(config, recipe_config):
 def mash_ph(config, recipe_config):
     """Estimates the pH of the mash.
 
+    Note: required parameters are in either config or
+    recipe_config. Where applicable, if a parameter is specified in
+    both config and recipe_config, the latter overrides the former.
+
+    Parameters
+    ----------
+     'mmole' : filename
+        Location of file specifying the blah blah blah. This parameter
+        needs to be a subparameter of the 'files' subparameter of the
+        'water' parameter in config.
+     'Malt' : array_like
+        Array of grist components (not necessarily malted). This is
+        the same input as is used in malt_composition. See the
+        documentation there. (The only inputs used here are the name
+        and mass, which are needed to determine what fraction of the
+        grain bill is acidulated malt.)
+     'pH reference temperature' : float
+        Reference temperature for pH measurements. This parameter
+        needs to be a subparameter of the 'water' parameter in config.
+
+    Returns
+    -------
+     This function appends fields (documented below) to recipe_config
+     and returns both config (unmodified) and recipe_config.
+
+    Fields Appended to recipe_config
+    --------------------------------
+     'Mash pH' : float
+        The predicted pH of the mash.
+     'pH Reference Temperature' : float
+        The reference temperature for the predicted mash pH, in
+        degrees Fahrenheit.
+
+    Notes
+    -----
+     The mash pH is defined implicitly by the balance equation. The
+     mash pH is computed via a root-finding algorithm. Basically, we
+     guess the mash pH and see if the balance equation holds,
+     adjusting the guess until we are right.
+
     """
 
     up = config['unit_parser']
@@ -518,6 +556,19 @@ def mash_ph(config, recipe_config):
 
 def balance_eq(mash_pH, data, config, recipe_config):
     """Computes the mash pH misbalance.
+
+    Parameters
+    ----------
+     mash_pH : float
+       Candidate mash pH.
+     data : array
+       Array of data for calculation.
+
+
+    Returns
+    -------
+     balance : float
+        Value of balance equation. See notes in mash_ph().
 
     """
     up = config['unit_parser']
@@ -638,7 +689,53 @@ def balance_eq(mash_pH, data, config, recipe_config):
 
 
 def get_targets(config, recipe_config):
-    # Generate A matrix
+    """Get water information.
+
+    Note: required parameters are in either config or
+    recipe_config. Where applicable, if a parameter is specified in
+    both config and recipe_config, the latter overrides the former.
+
+    Parameters
+    ----------
+     'water' : array_like
+        Array of candidate water sources, e.g. distilled vs. tap
+        water. Permits the user to specify different water sources,
+        and this script will determine what blend to use. Each water
+        source must specify its mineral contents via a collection of
+        key-value pairs, with key the name of the mineral (one of:
+          calcium
+          magnesium
+          sulfate
+          sodium
+          chloride
+          alkalinity
+          carbonate (different way of specifying alkalinity)
+        ) and value the parts-per-million concentration.
+     'Water Profile' : dictionary
+        Collection of key-value pairs specifying the desired mineral
+        levels for brewing, in parts-per-million. This parameter needs
+        to be a top-level parameter of recipe_config.
+     'salts' : array_like
+        Array of salts. This shouldn't be an input, it should just be
+        hard-coded.
+     'Residual Alkalinity' : array_like
+        Array of coefficients for residual alkalinity
+        calculation. This shouldn't be an input, it should just be
+        hard-coded.
+
+    Returns
+    -------
+     A : 2d array
+       Design matrix for optimization problem. The columns correspond
+       to the available ingredients, and the rows to the mineral
+       content.
+     target_composition : array
+       Array of desired mineral content.
+     rac : array
+       Coefficients for residual alkalinity calculation.
+
+    """
+
     cols = {}
     for w in config['water']['water']:
         calcium    = config['water']['water'][w].get('calcium',   0.)
