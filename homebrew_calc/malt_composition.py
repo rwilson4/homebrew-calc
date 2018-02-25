@@ -227,7 +227,7 @@ def execute(config, recipe_config):
     elif 'Water to Grist Ratio' in config:
         wtgr = up.convert(config['Water to Grist Ratio'], 'gallons_per_pound')
     else:
-        wtgr = up.convert('1.2 quarts_per_pound', 'gallons_per_pound')
+        wtgr = up.convert(1.2, 'quarts_per_pound', 'gallons_per_pound')
         msg = 'Water to Grist Ratio not specified,'
         msg += ' assuming 1.2 quarts_per_pound'
         print(msg)

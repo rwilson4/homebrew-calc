@@ -230,7 +230,7 @@ def execute(config, recipe_config):
         elif 'Pitchable Volume' in config:
             pitchable_volume = up.convert(config['Pitchable Volume'], 'milliliters')
         else:
-            pitchable_volume = up.convert('5.25 gallons', 'milliliters')
+            pitchable_volume = up.convert(5.25, 'gallons', 'milliliters')
             print('Pitchable volume not specified, assuming 5.25 gallons')
 
         # Want 750k cells per milliliter per degree Plato for ales

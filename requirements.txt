@@ -1,4 +1,4 @@
-unit_parser
+unit_parser>=0.2
 cvxpy
 numpy
 scipy

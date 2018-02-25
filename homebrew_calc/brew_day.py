@@ -244,7 +244,7 @@ def infusion_mash(config, recipe_config):
     mtf = wtitwg - mcr * mash_duration
 
 
-    print('Heat mash water ({0:.2f} gallons) to {1:.1f} degF.'.format(up.convert(str(mwv) + ' liters', 'gallons'), celsius_to_fahrenheit(wtik)))
+    print('Heat mash water ({0:.2f} gallons) to {1:.1f} degF.'.format(up.convert(mwv, 'liters', 'gallons'), celsius_to_fahrenheit(wtik)))
     if wtika is not None:
         print('Actual temperature achieved: {0:.1f} degF.'.format(celsius_to_fahrenheit(wtika)))
 
@@ -255,14 +255,14 @@ def infusion_mash(config, recipe_config):
 
     print('After adding grain and stirring, temperature is predicted to be {0:.1f} degF.'.format(celsius_to_fahrenheit(wtitwg)))
 
-    print('After {0:.0f} minutes, mash temp is expected to decrease to {1:.1f} degF.'.format(up.convert(str(mash_duration) + ' hours', 'minutes'), celsius_to_fahrenheit(mtf)))
+    print('After {0:.0f} minutes, mash temp is expected to decrease to {1:.1f} degF.'.format(up.convert(mash_duration, 'hours', 'minutes'), celsius_to_fahrenheit(mtf)))
     if mtfa is not None:
         print('Actual temperature: {0:.1f} degF.'.format(celsius_to_fahrenheit(mtfa)))
 
     if 'Sparge and Mash-out Water Volume' in recipe_config:
         smwv = up.convert(recipe_config['Sparge and Mash-out Water Volume'], 'gallons')
         print('Begin heating sparge and mash-out water: {0:.2f} gallons.'.format(smwv))
-        smwv = up.convert(str(smwv) + ' gallons', 'liters')
+        smwv = up.convert(smwv, 'gallons', 'liters')
         if mtfa is None:
             mowtm = (mttm + mwtm + gtm) * (sparge_temp - mtf) / (boiling_temp - sparge_temp)
         else:
@@ -274,8 +274,8 @@ def infusion_mash(config, recipe_config):
         swtm = swv * water_density * water_specific_heat
         swt = (hlttm * (sparge_temp - ambient_temp) + swtm * sparge_temp) / swtm
 
-        print('When water reaches {0:.1f} degF, transfer {1:.1f} gallons to the hot liquor tank.'.format(celsius_to_fahrenheit(swt), up.convert(str(swv) + ' liters', 'gallons')))
-        print('Bring remaining (mash-out) water, {0:.1f} gallons, to a boil.'.format(up.convert(str(mowv) + ' liters', 'gallons')))
+        print('When water reaches {0:.1f} degF, transfer {1:.1f} gallons to the hot liquor tank.'.format(celsius_to_fahrenheit(swt), up.convert(swv, 'liters', 'gallons')))
+        print('Bring remaining (mash-out) water, {0:.1f} gallons, to a boil.'.format(up.convert(mowv, 'liters', 'gallons')))
         print('Add mash-out water to mash, bringing temperature up to {0:.1f} degF.'.format(celsius_to_fahrenheit(sparge_temp)))
 
     if 'Brew Day' not in recipe_config:
@@ -510,18 +510,18 @@ def get_common_params(config, recipe_config):
     if 'Heat Loss During Kettle Transfer' in config:
         hldt = up.convert(config['Heat Loss During Kettle Transfer'], "degC")
     else:
-        hldt = up.convert("5.2 degF", "degC")
+        hldt = up.convert(5.2, "degF", "degC")
 
     # Heat Loss In Tun: temperature drop before adding grain (error margin)
     if 'Heat Loss in Mashtun' in config:
         hlit = up.convert(config['Heat Loss in Mashtun'], "degC")
     else:
-        hlit = up.convert("1 degF", "degC")
+        hlit = up.convert(1, "degF", "degC")
 
     if 'Mash Cooling Rate' in config:
         mcr = up.convert(config['Mash Cooling Rate'], "degC_per_hour")
     else:
-        mcr = up.convert("4 degF_per_hour", "degC_per_hour")
+        mcr = up.convert(4, "degF_per_hour", "degC_per_hour")
 
     if 'Sparge Temperature' in config:
         sparge_temp = fahrenheit_to_celsius(config['Sparge Temperature'])
