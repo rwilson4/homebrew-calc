@@ -245,7 +245,7 @@ def execute(config, recipe_config):
     recipe_config['Original Gravity'] = og
     recipe_config['SRM'] = wort_srm(mcu, pitchable_volume)
 
-    print('Mash Water Volume: {0:s}'.format(recipe_config['Mash Water Volume']))
+    # print('Mash Water Volume: {0:s}'.format(recipe_config['Mash Water Volume']))
     print('Original Gravity: {0:.03f}'.format(og))
     print('SRM: {0:.0f}'.format(recipe_config['SRM']))
 
