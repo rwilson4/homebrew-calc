@@ -62,3 +62,43 @@ def test_ibu_contribution():
     ibu_pellets = 29.7316380521 / 0.9
     assert hbc.ibu_contribution(aa, m, bv, ut, 'whole') == pytest.approx(ibu_whole)
     assert hbc.ibu_contribution(aa, m, bv, ut, 'pellets') == pytest.approx(ibu_pellets)
+
+
+def test_execution():
+    """Functional test
+
+    """
+    config = {}
+    recipe_config = {
+        'Average Gravity': 1.050,
+        'Pitchable Volume': '5 gallons',
+        'Hops': [
+            {
+                'name': 'FWH',
+                'addition type': 'first wort hopping',
+                'mass': '1 oz',
+                'alpha acids': 5.
+            },
+            {
+                'name': '60m',
+                'boil_time': '1 hour',
+                'mass': '1 oz',
+                'alpha acids': 5.
+            },
+            {
+                'name': 'Flameout',
+                'addition type': 'flameout',
+                'mass': '1 oz',
+                'alpha acids': 5.
+            },
+            {
+                'name': 'Dry Hop',
+                'addition type': 'dry hop',
+                'mass': '1 oz',
+                'alpha acids': 5.
+            }
+            ]
+    }
+
+    _, res = hbc.hop_composition.execute(config, recipe_config)
+    assert res['IBUs'] == pytest.approx(42.803352792814394)

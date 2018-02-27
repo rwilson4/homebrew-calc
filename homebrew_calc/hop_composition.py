@@ -263,6 +263,8 @@ def execute(config, recipe_config):
         with open(config['Output'], 'w') as outfile:
             json.dump(recipe_config, outfile, indent=2, sort_keys=True)
 
+    return config, recipe_config
+
 
 if __name__ == '__main__':
     main()
