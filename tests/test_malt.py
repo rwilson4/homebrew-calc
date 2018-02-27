@@ -30,3 +30,33 @@ def test_srm():
     vol = 5
     srm = 11.7732662449
     assert hbc.wort_srm(mcu, vol) == pytest.approx(srm)
+
+
+def test_execute():
+    """Functional test
+
+    """
+    config = {
+        'malt': {
+            'Sucrose': {
+                'ppg': 46
+            }
+        }
+    }
+
+    recipe_config = {
+        'Brewhouse Efficiency': 0.7,
+        'Pitchable Volume': '5 gallons',
+        'Water to Grist Ratio': '1.2 quarts_per_pound',
+        'Malt': [
+            {
+                'mass': '10 pounds',
+                'ppg': 30,
+                'degrees lovibond': 5.
+            }
+        ]
+    }
+
+    _, res = hbc.malt_composition.execute(config, recipe_config)
+    assert res['Original Gravity'] == pytest.approx(1.042)
+    assert res['SRM'] == pytest.approx(7.297704408589848)
