@@ -3,7 +3,7 @@ import json
 import os
 import sys
 from unit_parser import unit_parser
-from malt_composition import specific_gravity_to_gravity_points
+from .malt_composition import specific_gravity_to_gravity_points
 
 
 def main():

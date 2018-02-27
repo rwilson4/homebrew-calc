@@ -14,8 +14,8 @@ import numpy as np
 from unit_parser import unit_parser
 from scipy import interpolate
 import cvxpy as cvx
-from malt_composition import gravity_points_to_specific_gravity
-from malt_composition import specific_gravity_to_gravity_points
+from .malt_composition import gravity_points_to_specific_gravity
+from .malt_composition import specific_gravity_to_gravity_points
 
 
 def convert_pH_temp_main():
