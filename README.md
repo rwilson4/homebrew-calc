@@ -1,5 +1,24 @@
 # homebrew-calc
 
+<table>
+<tr>
+  <td>Build Status</td>
+  <td>
+    <a href="https://travis-ci.org/rwilson4/homebrew-calc">
+    <img src="https://travis-ci.org/rwilson4/homebrew-calc.svg?branch=master&label=Travis%20CI" alt="travis build status" />
+    </a>
+  </td>
+</tr>
+<tr>
+  <td>Code Coverage</td>
+  <td>
+    <a href="https://codecov.io/gh/rwilson4/homebrew-calc">
+    <img src="https://codecov.io/gh/rwilson4/homebrew-calc/branch/master/graph/badge.svg" />
+    </a>
+  </td>
+</tr>
+</table>
+
 This is a collection of utilities for planning and executing beer
 recipes. It takes recipes in JSON form, and predicts the Original
 Gravity (OG), the beer color in terms of the Standard Reference Method
