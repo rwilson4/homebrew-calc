@@ -68,16 +68,21 @@ def test_execution():
     """Functional test
 
     """
-    config = {}
+    config = {
+        'hop': {
+            'Mosaic': {
+                'alpha acids': 5.
+            }
+        }
+    }
     recipe_config = {
         'Average Gravity': 1.050,
         'Pitchable Volume': '5 gallons',
         'Hops': [
             {
-                'name': 'FWH',
+                'name': 'Mosaic',
                 'addition type': 'first wort hopping',
-                'mass': '1 oz',
-                'alpha acids': 5.
+                'mass': '1 oz'
             },
             {
                 'name': '60m',
