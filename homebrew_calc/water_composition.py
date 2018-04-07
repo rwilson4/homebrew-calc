@@ -353,7 +353,7 @@ def salt_additions(config, recipe_config):
     """
 
     up = config['unit_parser']
-    A, target_composition, rac = get_targets(config, recipe_config)
+    tgt_cmp, cl_to_sl, res_alk, A, B, b, C, c, rac = get_targets(config, recipe_config)
     num_minerals, num_ingredients = A.shape
 
     ingredients = ['Distilled water',
@@ -372,30 +372,31 @@ def salt_additions(config, recipe_config):
                 'Chloride',
                 'Total Alkalinity']
 
-    target_rac = rac.dot(target_composition)
     w = cvx.Variable(num_ingredients)
     r = cvx.Variable(num_minerals)
-    b = np.array([10, 1, 5, 0.001, 5, 10])
+    chem_wt = np.array([10, 1, 5, 0.001, 5, 10])
     complexity_penalty = 1.0
 
-    obj = cvx.norm(cvx.mul_elemwise(b, r - target_composition))
-    obj += complexity_penalty * cvx.norm(w[1:], 1)
+    obj = complexity_penalty * cvx.norm(w[1:], 1)
+    # obj += cvx.norm(cvx.mul_elemwise(chem_wt, r - tgt_cmp))
 
-    constraints = [0 <= w[:],
-                   w[0] == 1.0, # 100% distilled
-                   r[:] == A * w[:],
-                   50 <= r[0], # Calcium
-                   r[0] <= 200,
-                   50 <= r[2], # Sulfate
-                   r[2] <= 500,
-                   r[3] <= 100, # Sodium
-                   50 <= r[4], # Chloride
-                   r[4] <= 200,
-                   r.T * rac == target_rac, # Residual alkalinity
-                   r[4] * target_composition[2] == r[2] * target_composition[4], # Chloride to sulfate ratio
-                   w[1] == 0, # No chalk
-                   w[6] == 0, # No MgSO4
-                   ]
+    constraints = [
+        0 <= w[:],
+        w[0] == 1.0, # 100% distilled
+        r[:] == A * w[:]
+    ]
+
+    if res_alk is not None:
+        constraints.append(r.T * rac == res_alk)
+
+    if cl_to_sl is not None:
+        constraints.append(r[4] == r[2] * cl_to_sl)
+
+    if B is not None and b is not None:
+        constraints.append(B * w[:] == b[:])
+
+    if C is not None and c is not None:
+        constraints.append(C * r[:] <= c[:])
 
     objective = cvx.Minimize(obj)
     prob = cvx.Problem(objective, constraints)
@@ -729,31 +730,68 @@ def get_targets(config, recipe_config):
        Design matrix for optimization problem. The columns correspond
        to the available ingredients, and the rows to the mineral
        content.
-     target_composition : array
+     tgt_cmp : array
        Array of desired mineral content.
      rac : array
        Coefficients for residual alkalinity calculation.
 
     """
 
+    up = config['unit_parser']
+
+    salts = [
+        'distilled',
+        'Food-grade Chalk',
+        'Baking Soda',
+        'Gypsum',
+        'Epsom Salt',
+        'Calcium Chloride',
+        'Magnesium Chloride',
+        'Table Salt'
+    ]
+
+    minerals = [
+        'calcium',
+        'magnesium',
+        'sulfate',
+        'sodium',
+        'chloride',
+        'alkalinity'
+    ]
+
+    salt_dict = {k: i for (i, k) in enumerate(salts)}
+    mineral_dict = {k: i for (i, k) in enumerate(minerals)}
+
     cols = {}
-    for w in config['water']['water']:
-        calcium    = config['water']['water'][w].get('calcium',   0.)
-        magnesium  = config['water']['water'][w].get('magnesium', 0.)
-        sulfate    = config['water']['water'][w].get('sulfate',   0.)
-        sodium     = config['water']['water'][w].get('sodium',    0.)
-        chloride   = config['water']['water'][w].get('chloride',  0.)
-        alkalinity = config['water']['water'][w].get('alkalinity', config['water']['water'][w].get('carbonate', 0.) * 50. / 61)
+    for w, p in config['water']['water'].iteritems():
+        calcium    = p.get('calcium',   0.)
+        magnesium  = p.get('magnesium', 0.)
+        sulfate    = p.get('sulfate',   0.)
+        sodium     = p.get('sodium',    0.)
+        chloride   = p.get('chloride',  0.)
+        if 'alkalinity' in p:
+            alkalinity = p['alkalinity']
+        elif 'carbonate' in p:
+            alkalinity = p['carbonate'] * 50. / 61
+        else:
+            alkalinity = 0.
+
         r = np.array([calcium, magnesium, sulfate, sodium, chloride, alkalinity])
         cols[w] = r
 
-    for s in config['water']['salts']:
-        calcium    = config['water']['salts'][s].get('calcium',   0.)
-        magnesium  = config['water']['salts'][s].get('magnesium', 0.)
-        sulfate    = config['water']['salts'][s].get('sulfate',   0.)
-        sodium     = config['water']['salts'][s].get('sodium',    0.)
-        chloride   = config['water']['salts'][s].get('chloride',  0.)
-        alkalinity = config['water']['salts'][s].get('alkalinity', config['water']['salts'][s].get('carbonate', 0.) * 50. / 61)
+    for s, m in config['water']['salts'].iteritems():
+        calcium    = m.get('calcium',   0.)
+        magnesium  = m.get('magnesium', 0.)
+        sulfate    = m.get('sulfate',   0.)
+        sodium     = m.get('sodium',    0.)
+        chloride   = m.get('chloride',  0.)
+        if 'alkalinity' in m:
+            alkalinity = m['alkalinity']
+        elif 'carbonate' in m:
+            alkalinity = m['carbonate'] * 50. / 61
+        else:
+            alkalinity = 0.
+
         r = np.array([calcium, magnesium, sulfate, sodium, chloride, alkalinity])
         cols[s] = r
 
@@ -766,23 +804,104 @@ def get_targets(config, recipe_config):
                   cols['Magnesium Chloride'],
                   cols['Table Salt']]).transpose()
 
-    calcium    = recipe_config['Water Profile'].get('calcium',    0.)
-    magnesium  = recipe_config['Water Profile'].get('magnesium',  0.)
-    sulfate    = recipe_config['Water Profile'].get('sulfate',    0.)
-    sodium     = recipe_config['Water Profile'].get('sodium',     0.)
-    chloride   = recipe_config['Water Profile'].get('chloride',   0.)
-    alkalinity = recipe_config['Water Profile'].get('alkalinity', recipe_config['Water Profile'].get('carbonate', 0.) * 50. / 61)
-    target_composition = np.array([calcium, magnesium, sulfate, sodium, chloride, alkalinity])
-
-    calcium    = config['water']['Residual Alkalinity'].get('calcium',    0.)
-    magnesium  = config['water']['Residual Alkalinity'].get('magnesium',  0.)
-    sulfate    = config['water']['Residual Alkalinity'].get('sulfate',    0.)
-    sodium     = config['water']['Residual Alkalinity'].get('sodium',     0.)
-    chloride   = config['water']['Residual Alkalinity'].get('chloride',   0.)
-    alkalinity = config['water']['Residual Alkalinity'].get('alkalinity', config['water']['Residual Alkalinity'].get('carbonate', 0.) * 50. / 61)
+    res_alk_prof = config['water']['Residual Alkalinity']
+    calcium    = res_alk_prof.get('calcium',    0.)
+    magnesium  = res_alk_prof.get('magnesium',  0.)
+    sulfate    = res_alk_prof.get('sulfate',    0.)
+    sodium     = res_alk_prof.get('sodium',     0.)
+    chloride   = res_alk_prof.get('chloride',   0.)
+    if 'alkalinity' in res_alk_prof:
+        alkalinity = res_alk_prof['alkalinity']
+    elif 'carbonate' in res_alk_prof:
+        alkalinity = res_alk_prof['carbonate'] * 50. / 61
+    else:
+        alkalinity = 0.
     rac = np.array([calcium, magnesium, sulfate, sodium, chloride, alkalinity])
 
-    return A, target_composition, rac
+    res_alk = None
+    cl_to_sl = None
+    if 'target' in recipe_config['Water Profile']:
+        tgt = recipe_config['Water Profile']['target']
+
+        calcium    = tgt.get('calcium',    0.)
+        magnesium  = tgt.get('magnesium',  0.)
+        sulfate    = tgt.get('sulfate',    0.)
+        sodium     = tgt.get('sodium',     0.)
+        chloride   = tgt.get('chloride',   0.)
+        alkalinity = tgt.get('alkalinity', tgt.get('carbonate', 0.) * 50. / 61)
+        tgt_cmp = np.array([calcium, magnesium, sulfate, sodium, chloride, alkalinity])
+
+        if 'residualAlkalinity' in tgt:
+            res_alk = tgt['residualAlkalinity']
+        else:
+            res_alk = tgt_cmp.dot(rac)
+
+        if 'chlorideToSulfateRatio' in tgt:
+            cl_to_sl = tgt['chlorideToSulfateRatio']
+        elif 'chloride' in tgt and 'sulfate' in tgt:
+            cl_to_sl = float(tgt['chloride']) / tgt['sulfate']
+    else:
+        tgt_cmp = None
+
+    if 'saltAdditions' in recipe_config['Water Profile']:
+        salt_additions = recipe_config['Water Profile']['saltAdditions']
+    elif 'defaultSaltAdditions' in config['water']:
+        salt_additions = config['water']['defaultSaltAdditions']
+    else:
+        salt_additions = None
+
+    if salt_additions is None:
+        B = None
+        b = None
+    else:
+        linted_salt_additions = {k: v for k, v in salt_additions.iteritems()
+                                 if k in salts and k != 'distilled'}
+
+        ns = len(linted_salt_additions.keys())
+        B = np.zeros((ns, len(salts)))
+        b = np.zeros((ns,))
+        i = 0
+        for k, v in linted_salt_additions.iteritems():
+            B[i, salt_dict[k]] = 1.
+            b[i] = up.convert(v, 'grams')
+            i += 1
+
+    if 'mineralConstraints' in recipe_config['Water Profile']:
+        chem_const = recipe_config['Water Profile']['mineralConstraints']
+    elif 'mineralConstraints' in config['water']:
+        chem_const = config['water']['mineralConstraints']
+    else:
+        chem_const = None
+
+    if chem_const is None:
+        C = None
+        c = None
+    else:
+        linted_constraints = {k: v for k, v in chem_const.iteritems()
+                              if k in minerals}
+
+        nc = 0
+        for v in linted_constraints.values():
+            if 'minimum' in v:
+                nc += 1
+            if 'maximum' in v:
+                nc += 1
+
+        C = np.zeros((nc, len(minerals)))
+        c = np.zeros((nc,))
+        i = 0
+        for k, v in linted_constraints.iteritems():
+            if 'minimum' in v:
+                c[i] = -v['minimum']
+                C[i, mineral_dict[k]] = -1
+                i += 1
+
+            if 'maximum' in v:
+                c[i] = v['maximum']
+                C[i, mineral_dict[k]] = 1
+                i += 1
+
+    return tgt_cmp, cl_to_sl, res_alk, A, B, b, C, c, rac
 
 
 if __name__ == '__main__':
