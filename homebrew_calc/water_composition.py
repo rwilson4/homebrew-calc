@@ -7,6 +7,7 @@
 #
 # http://braukaiser.com/wiki/index.php?title=Mash_pH_control
 from __future__ import print_function
+from six import iteritems
 import json
 import os
 import sys
@@ -33,6 +34,7 @@ def convert_pH_temp_main():
     args = parser.parse_args()
     pH = convert_pH_temp(args.pH, args.original_temperature, args.desired_temperature)
     print('{0:.03f}'.format(pH))
+    return pH
 
 
 def convert_pH_temp(pH, original_temperature, desired_temperature):
@@ -764,7 +766,7 @@ def get_targets(config, recipe_config):
     num_minerals = len(minerals)
     mineral_dict = {k: i for (i, k) in enumerate(minerals)}
     water_minerals = {}
-    for w, p in config['water']['water'].iteritems():
+    for w, p in iteritems(config['water']['water']):
         waters.append(w)
 
         r = np.array([p.get(m, 0) for m in minerals])
@@ -774,7 +776,7 @@ def get_targets(config, recipe_config):
         water_minerals[w] = r
 
     salt_minerals = {}
-    for s, p in config['water']['salts'].iteritems():
+    for s, p in iteritems(config['water']['salts']):
         salts.append(s)
 
         r = np.array([p.get(m, 0) for m in minerals])
@@ -830,7 +832,7 @@ def get_targets(config, recipe_config):
         B = None
         b = None
     else:
-        linted_salt_additions = {k: v for k, v in salt_additions.iteritems()
+        linted_salt_additions = {k: v for k, v in iteritems(salt_additions)
                                  if k in salts}
 
         ns = len(linted_salt_additions.keys())
@@ -851,7 +853,7 @@ def get_targets(config, recipe_config):
         C = None
         c = None
     else:
-        linted_constraints = {k: v for k, v in chem_const.iteritems()
+        linted_constraints = {k: v for k, v in iteritems(chem_const)
                               if k in minerals}
 
         nc = 0
@@ -864,7 +866,7 @@ def get_targets(config, recipe_config):
         C = np.zeros((nc, len(minerals)))
         c = np.zeros((nc,))
         i = 0
-        for k, v in linted_constraints.iteritems():
+        for k, v in iteritems(linted_constraints):
             if 'minimum' in v:
                 c[i] = -v['minimum']
                 C[i, mineral_dict[k]] = -1
