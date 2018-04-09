@@ -33,6 +33,7 @@ def convert_pH_temp_main():
     args = parser.parse_args()
     pH = convert_pH_temp(args.pH, args.original_temperature, args.desired_temperature)
     print('{0:.03f}'.format(pH))
+    return pH
 
 
 def convert_pH_temp(pH, original_temperature, desired_temperature):

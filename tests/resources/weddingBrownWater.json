@@ -1,0 +1,66 @@
+{
+  "Hops": [
+    {
+      "boil_time": "60 minutes", 
+      "mass": "0.75 ounce", 
+      "name": "EK Goldings", 
+      "type": "pellets"
+    }
+  ], 
+  "Malt": [
+    {
+      "mass": "6.5 pounds", 
+      "name": "Maris Otter"
+    }, 
+    {
+      "acidity": 40.0, 
+      "degrees lovibond": 19.0, 
+      "extract potential": 0.75, 
+      "mass": "1.5 pounds", 
+      "name": "Victory Malt", 
+      "type": "roast"
+    }, 
+    {
+      "acidity": 40.0, 
+      "degrees lovibond": 200.0, 
+      "extract potential": 0.71, 
+      "mass": "10 ounces", 
+      "name": "Pale Chocolate", 
+      "type": "roast"
+    }, 
+    {
+      "acidity": 40.0, 
+      "degrees lovibond": 430, 
+      "extract potential": 0.7, 
+      "mass": "6 ounces", 
+      "name": "Dehusked Carafa II", 
+      "type": "roast"
+    }
+  ], 
+  "Mash": {
+    "duration": "60 minutes", 
+    "temperature": 156, 
+    "type": "Infusion"
+  }, 
+  "Mash Water Volume": "2.587500 gallons", 
+  "Original Gravity": 1.0451183333333334, 
+  "Pitchable Volume": "5.25 gallons", 
+  "SRM": 26.17493585488928, 
+  "Water Profile": {
+    "saltAdditions": {
+      "Food-grade Chalk": "0 grams", 
+      "Magnesium Sulfate": "0 grams", 
+      "Table Salt": "0 grams"
+    }, 
+    "target": {
+      "chlorideToSulfateRatio": 2, 
+      "residualAlkalinity": -20
+    }
+  }, 
+  "Yeast": [
+    {
+      "attenuation": 0.8, 
+      "name": "WLP002 English Ale"
+    }
+  ]
+}
