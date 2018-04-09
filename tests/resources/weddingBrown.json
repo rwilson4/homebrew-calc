@@ -1,0 +1,52 @@
+{
+  "Pitchable Volume": "5.25 gallons",
+  "Malt": [
+    {
+      "name": "Maris Otter",
+      "mass": "6.5 pounds"
+    },
+    {
+      "name": "Victory Malt",
+      "mass": "1.5 pounds",
+      "type": "roast",
+      "acidity": 40.0,
+      "extract potential": 0.75,
+      "degrees lovibond": 19.0
+    },
+    {
+      "name": "Pale Chocolate",
+      "mass": "10 ounces",
+      "type": "roast",
+      "acidity": 40.0,
+      "extract potential": 0.71,
+      "degrees lovibond": 200.0
+    },
+    {
+      "name": "Dehusked Carafa II",
+      "mass": "6 ounces",
+      "type": "roast",
+      "acidity": 40.0,
+      "extract potential": 0.70,
+      "degrees lovibond": 430
+    }
+  ],
+  "Hops": [
+    {
+      "name": "EK Goldings",
+      "mass": "0.75 ounce",
+      "type": "pellets",
+      "boil_time": "60 minutes"
+    }
+  ],
+  "Yeast": [
+    {
+      "name": "WLP002 English Ale",
+      "attenuation": 0.8
+    }
+  ],
+  "Mash": {
+    "type": "Infusion",
+    "temperature": 156,
+    "duration": "60 minutes"
+  }
+}
