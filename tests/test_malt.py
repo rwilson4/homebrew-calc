@@ -1,4 +1,11 @@
 import pytest
+import sys
+import os
+try:
+    from unittest.mock import patch
+except ImportError:
+    from mock import patch
+
 from .context import homebrew_calc as hbc
 
 
@@ -80,3 +87,13 @@ def test_execute():
     _, res = hbc.malt_composition.execute(config, recipe_config)
     assert res['Original Gravity'] == pytest.approx(1.058352)
     assert res['SRM'] == pytest.approx(7.297704408589848)
+
+    
+def test_malt_clu():
+    this_dir, this_filename = os.path.split(__file__)
+    beer_recipe = os.path.join(this_dir, 'resources', 'weddingBrown.json')
+    output_recipe = os.path.join(this_dir, 'resources', 'weddingBrown_1.json')
+    testargs = ['malt_composition', beer_recipe, '-o', output_recipe]
+    with patch.object(sys, 'argv', testargs):
+        hbc.malt_composition.main()
+        assert os.path.isfile(output_recipe)
